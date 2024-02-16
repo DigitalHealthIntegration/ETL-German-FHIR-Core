@@ -5,15 +5,7 @@ import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.miracum.etl.fhirtoomop.model.omop.ConditionOccurrence;
-import org.miracum.etl.fhirtoomop.model.omop.DeviceExposure;
-import org.miracum.etl.fhirtoomop.model.omop.DrugExposure;
-import org.miracum.etl.fhirtoomop.model.omop.Measurement;
-import org.miracum.etl.fhirtoomop.model.omop.OmopObservation;
-import org.miracum.etl.fhirtoomop.model.omop.Person;
-import org.miracum.etl.fhirtoomop.model.omop.ProcedureOccurrence;
-import org.miracum.etl.fhirtoomop.model.omop.VisitDetail;
-import org.miracum.etl.fhirtoomop.model.omop.VisitOccurrence;
+import org.miracum.etl.fhirtoomop.model.omop.*;
 
 /**
  * The OmopModelWrapper class serves as a cache of newly created records, which are to be written to
@@ -33,6 +25,7 @@ public class OmopModelWrapper {
   private List<DrugExposure> drugExposure = new ArrayList<>();
   private List<Measurement> measurement = new ArrayList<>();
   private List<OmopObservation> observation = new ArrayList<>();
+  private List<Provider> provider = new ArrayList<>();
   private List<VisitDetail> visitDetail = new ArrayList<>();
   private List<DeviceExposure> deviceExposure = new ArrayList<>();
 
@@ -58,8 +51,8 @@ public class OmopModelWrapper {
     MEASUREMENT("measurement"),
     PROCEDUREOCCURRENCE("procedure_occurrence"),
     DEVICEEXPOSURE("device_exposure"),
-    DRUGEXPOSURE("drug_exposure");
-
+    DRUGEXPOSURE("drug_exposure"),
+    PROVIDER("provider");
     private final String label;
 
     /**
