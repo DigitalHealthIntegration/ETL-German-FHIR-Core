@@ -81,6 +81,7 @@ public class OmopWriter implements ItemWriter<OmopModelWrapper> {
     writeDrugExposure(entries);
     writeMeasurement(entries);
     writeDeviceExposure(entries);
+    writeProvider(entries);
     writeSpecimen(entries);
 
     return Optional.empty();
@@ -207,6 +208,26 @@ public class OmopWriter implements ItemWriter<OmopModelWrapper> {
       log.info("Inserting {} rows into observation table", observations.size());
 
       repository.getObservationRepository().saveAll(observations);
+    }
+  }
+
+  /**
+   * Writes the data from FHIR resources to the observation table in OMOP CDM.
+   *
+   * @param entries list of elements to be written to OMOP CDM
+   */
+  private void writeProvider(List<? extends OmopModelWrapper> entries) {
+    var providers =
+            entries.stream()
+                    .filter(entry -> entry.getProvider() != null)
+                    .map(OmopModelWrapper::getProvider)
+                    .flatMap(List::stream)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+
+    if (!providers.isEmpty()) {
+      log.info("Inserting {} rows into observation table", providers.size());
+      repository.getProviderRepository().saveAll(providers);
     }
   }
 
