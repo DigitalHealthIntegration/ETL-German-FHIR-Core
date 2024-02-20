@@ -70,7 +70,7 @@ public class PractitionerMapper implements FhirMapper<Practitioner> {
             year = localDate.getYear();
         }
         var practitionerId = fhirReferenceUtils.extractId(resource);
-        Provider provider = setUpProvier(gender, id, fullName, year != 0 ? year : null, practitionerId);
+        Provider provider = setUpProvider(gender, id, fullName, year != 0 ? year : null, practitionerId);
         wrapper.getProvider().add(provider);
         return wrapper;
     }
@@ -84,7 +84,7 @@ public class PractitionerMapper implements FhirMapper<Practitioner> {
      * @param practitionerId The logical identifier of the practitioner.
      * @return A {@code Provider} entity.
      */
-    private Provider setUpProvier(String gender,Integer id,String fullName, Integer year, String practitionerId ){
+    private Provider setUpProvider(String gender,Integer id,String fullName, Integer year, String practitionerId ){
         var provider =
                 Provider.builder()
                         .providerId(id)
