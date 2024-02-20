@@ -426,12 +426,15 @@ public class TaskConfiguration {
       Step stepProcessConsent,
       Step stepProcessDiagnosticReport,
       Step stepProcessPractitioners,
+      Step stepProcessPractitionerRole,
       Flow medicationStepsFlow) {
     return new FlowBuilder<SimpleFlow>("bulkload")
-        .start(stepProcessOrganization)
-            .next(stepProcessPatients)
+            .start(stepProcessOrganization)
+        .start(stepProcessPatients)
         .next(stepProcessEncounterInstitutionContact)
             .next(stepProcessPractitioners)
+            .start(stepProcessPractitionerRole)
+            .next(stepEncounterDepartmentCase)
         .next(medicationStepsFlow)
         .next(stepProcessConditions)
         .next(stepProcessObservations)
@@ -439,7 +442,6 @@ public class TaskConfiguration {
         .next(stepProcessImmunization)
         .next(stepProcessConsent)
         .next(stepProcessDiagnosticReport)
-            .next(stepEncounterDepartmentCase)
         .build();
   }
 
@@ -721,6 +723,51 @@ public class TaskConfiguration {
 
         return new PatientProcessor(patientMapper, parser);
     }
+
+  @Bean
+  public Step stepProcessPractitionerRole(
+          PractitionerRoleProcessor practitionerRoleProcessor,
+          PractitionerRoleStepListener practitionerRoleStepListener,
+          ItemStreamReader<FhirPsqlResource> readerPsqlPractitionerRole,
+          ItemWriter<OmopModelWrapper> writer) {
+
+    var stepProcessPractitionerRoleBuilder =
+            stepBuilderFactory
+                    .get("stepProcessPractitionerRoles")
+                    .listener(practitionerRoleStepListener)
+                    .<FhirPsqlResource, OmopModelWrapper>chunk(batchChunkSize)
+                    .reader(readerPsqlPractitionerRole)
+                    .processor(practitionerRoleProcessor)
+                    .listener(new FhirResourceProcessListener())
+                    .writer(writer);
+    if (StringUtils.isBlank(fhirBaseUrl)) {
+      stepProcessPractitionerRoleBuilder.throttleLimit(throttleLimit).taskExecutor(taskExecutor());
+    }
+    return stepProcessPractitionerRoleBuilder.build();
+  }
+
+  @Bean
+  public PractitionerRoleProcessor practitionerRoleProcessor(IParser parser, PractitionerRoleMapper practitionerRoleMapper) {
+    return new PractitionerRoleProcessor(practitionerRoleMapper, parser);
+  }
+
+  @Bean
+  @StepScope
+  public ItemStreamReader<FhirPsqlResource> readerPsqlPractitionerRole(
+          @Qualifier("readerDataSource") final DataSource dataSource,
+          IGenericClient client,
+          IParser fhirParser) {
+    var resourceType = ResourceType.PRACTITIONERROLE.name();
+    log.info(FETCH_RESOURCES_LOG, resourceType);
+    if (StringUtils.isBlank(fhirBaseUrl)) {
+      return createResourceReader(resourceType, dataSource);
+    }
+    return fhirServerItemReader(
+            client,
+            fhirParser,
+            ResourceType.PRACTITIONERROLE.getDisplay(),
+            STEP_ENCOUNTER_INSTITUTION_KONTAKT);
+  }
 
   /**
    * Defines the step for processing FHIR Patient resources. This step loads and processes Patient
