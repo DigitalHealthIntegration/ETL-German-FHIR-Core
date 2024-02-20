@@ -423,6 +423,7 @@ public class TaskConfiguration {
       Step stepProcessImmunization,
       Step stepProcessConsent,
       Step stepProcessDiagnosticReport,
+      Step stepProcessPractitioners,
       Flow medicationStepsFlow) {
     return new FlowBuilder<SimpleFlow>("bulkload")
         .start(stepProcessPatients)
