@@ -17,6 +17,7 @@ import static org.miracum.etl.fhirtoomop.Constants.SOURCE_VOCABULARY_SOFA_CATEGO
 import static org.miracum.etl.fhirtoomop.Constants.STAR_CROSS_CODING_REGEX;
 import static org.miracum.etl.fhirtoomop.Constants.VOCABULARY_ATC;
 import static org.miracum.etl.fhirtoomop.Constants.VOCABULARY_ICD10GM;
+import static org.miracum.etl.fhirtoomop.Constants.VOCABULARY_IPRD;
 import static org.miracum.etl.fhirtoomop.Constants.VOCABULARY_LOINC;
 import static org.miracum.etl.fhirtoomop.Constants.VOCABULARY_OPS;
 import static org.miracum.etl.fhirtoomop.Constants.VOCABULARY_ORPHA;
@@ -688,6 +689,8 @@ public class FindOmopConcepts {
         return SOURCE_VOCABULARY_ID_ECRF_PARAMETER;
       case GECCOSOFASCORE:
         return SOURCE_VOCABULARY_SOFA_CATEGORY;
+      case DIAGNOSECODE:
+        return VOCABULARY_IPRD;
       default:
         return null;
     }

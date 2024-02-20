@@ -9,6 +9,8 @@ import static org.miracum.etl.fhirtoomop.Constants.OMOP_DOMAIN_CONDITION;
 import static org.miracum.etl.fhirtoomop.Constants.OMOP_DOMAIN_MEASUREMENT;
 import static org.miracum.etl.fhirtoomop.Constants.OMOP_DOMAIN_OBSERVATION;
 import static org.miracum.etl.fhirtoomop.Constants.OMOP_DOMAIN_PROCEDURE;
+import static org.miracum.etl.fhirtoomop.Constants.OMOP_DOMAIN_SPECIMEN_ANATOMIC_SITE;
+import static org.miracum.etl.fhirtoomop.Constants.OMOP_DOMAIN_SPECIMEN;
 import static org.miracum.etl.fhirtoomop.Constants.SOURCE_VOCABULARY_ID_DIAGNOSTIC_CONFIDENCE;
 import static org.miracum.etl.fhirtoomop.Constants.SOURCE_VOCABULARY_ID_ICD_LOCALIZATION;
 import static org.miracum.etl.fhirtoomop.Constants.VOCABULARY_ICD10GM;
@@ -22,6 +24,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.hl7.fhir.r4.model.Coding;
@@ -46,6 +50,7 @@ import org.miracum.etl.fhirtoomop.model.omop.Measurement;
 import org.miracum.etl.fhirtoomop.model.omop.OmopObservation;
 import org.miracum.etl.fhirtoomop.model.omop.ProcedureOccurrence;
 import org.miracum.etl.fhirtoomop.model.omop.SourceToConceptMap;
+import org.miracum.etl.fhirtoomop.model.omop.Specimen;
 import org.miracum.etl.fhirtoomop.repository.service.ConditionMapperServiceImpl;
 import org.miracum.etl.fhirtoomop.repository.service.OmopConceptServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -123,6 +128,10 @@ public class ConditionMapper implements FhirMapper<Condition> {
     var wrapper = new OmopModelWrapper();
 
     var conditionLogicId = fhirReferenceUtils.extractId(srcCondition);
+//    var result = Objects.equals(conditionLogicId, "con-ad38f601-28a0-4032-bcf6-25b9da11b54a");
+//    if(!result){
+//      return null;
+//    }
     var conditionSourceIdentifier = fhirReferenceUtils.extractResourceFirstIdentifier(srcCondition);
     if (Strings.isNullOrEmpty(conditionLogicId)
         && Strings.isNullOrEmpty(conditionSourceIdentifier)) {
@@ -444,7 +453,29 @@ public class ConditionMapper implements FhirMapper<Condition> {
       }
 
     } else {
-      return;
+      snomedConcept =
+              findOmopConcepts.getConcepts(
+                      diagnoseCoding,
+                      diagnoseOnset.getStartDateTime().toLocalDate(),
+                      bulkload,
+                      dbMappings,
+                      conditionId);
+
+      if (snomedConcept == null) {
+        return;
+      }
+
+      icdProcessor(
+              null,
+              snomedConcept,
+              null,
+              wrapper,
+              diagnoseOnset,
+              diagnosticConfidenceConcept,
+              conditionLogicId,
+              conditionSourceIdentifier,
+              personId,
+              visitOccId);
     }
 
     setBodySiteLocalization(
@@ -930,6 +961,10 @@ public class ConditionMapper implements FhirMapper<Condition> {
       Integer diagnoseConceptId,
       Integer diagnoseSourceConceptId,
       String domain) {
+    if(domain == null){
+      log.warn("fhirId = {}={}",conditionLogicId,domain);
+      return;
+    }
     switch (domain) {
       case OMOP_DOMAIN_CONDITION:
         var condition =
@@ -948,6 +983,7 @@ public class ConditionMapper implements FhirMapper<Condition> {
 
         break;
       case OMOP_DOMAIN_OBSERVATION:
+      case OMOP_DOMAIN_SPECIMEN_ANATOMIC_SITE:
         var observation =
             setUpObservation(
                 diagnoseOnset.getStartDateTime(),
@@ -995,7 +1031,16 @@ public class ConditionMapper implements FhirMapper<Condition> {
         wrapper.getMeasurement().add(measurement);
 
         break;
-      case "Spec Anatomic Site":
+      case OMOP_DOMAIN_SPECIMEN:
+        var specimen =
+                setupSpecimen(
+                        personId,
+                        diagnoseOnset,
+                        diagnoseConceptId,
+                        diagnoseSourceConceptId);
+
+        wrapper.getSpecimen().add(specimen);
+
         break;
       default:
         throw new UnsupportedOperationException(String.format("Unsupported domain %s", domain));
@@ -1072,6 +1117,22 @@ public class ConditionMapper implements FhirMapper<Condition> {
     } else {
       conditionService.updateExistingPpmEntriesByFhirIdentifier(conditionSourceIdentifier);
     }
+  }
+
+  private Specimen setupSpecimen(
+          Long personId,
+          ResourceOnset diagnoseOnset,
+          Integer diagnoseConceptId,
+          Integer diagnoseSourceConceptId
+          ) {
+
+    return Specimen.builder()
+            .personId(personId)
+            .specimenDate(diagnoseOnset.getStartDateTime().toLocalDate())
+            .specimenDateTime(diagnoseOnset.getStartDateTime())
+            .specimenConceptId(diagnoseConceptId)
+            .specimenTypeConceptId(diagnoseSourceConceptId)
+            .build();
   }
 
   /**
