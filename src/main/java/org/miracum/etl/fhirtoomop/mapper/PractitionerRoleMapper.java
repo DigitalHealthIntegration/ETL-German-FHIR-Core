@@ -6,6 +6,7 @@ import io.micrometer.core.instrument.Counter;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.r4.model.Enumerations;
 import org.hl7.fhir.r4.model.PractitionerRole;
+import org.hl7.fhir.r4.model.ResourceType;
 import org.miracum.etl.fhirtoomop.DbMappings;
 import org.miracum.etl.fhirtoomop.config.FhirSystems;
 import org.miracum.etl.fhirtoomop.mapper.FhirMapper;
@@ -55,9 +56,12 @@ public class PractitionerRoleMapper implements FhirMapper<PractitionerRole> {
         String practitionerId = practitionerRole.getPractitioner().getReferenceElement().getIdPart();
         String organizationId = practitionerRole.getOrganization().getReferenceElement().getIdPart();
 
+        log.warn("practitionerID " + practitionerId );
+        log.warn("organizationId " + organizationId );
 
-        String practitionerLogicalId = fhirReferenceUtils.extractId(Enumerations.ResourceType.PRACTITIONER.name(), practitionerId);
-        String organizationLogicalId = fhirReferenceUtils.extractId(Enumerations.ResourceType.ORGANIZATION.name(), organizationId);
+
+        String practitionerLogicalId = fhirReferenceUtils.extractId(ResourceType.Practitioner.name(), practitionerId);
+        String organizationLogicalId = fhirReferenceUtils.extractId(ResourceType.Organization.name(), organizationId);
 
 //        String practitionerId = practitionerRole.getPractitioner().getReference();
 //        String organizationId = practitionerRole.getOrganization().getReference();
