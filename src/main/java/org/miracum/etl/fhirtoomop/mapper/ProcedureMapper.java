@@ -121,10 +121,6 @@ public class ProcedureMapper implements FhirMapper<Procedure> {
     var wrapper = new OmopModelWrapper();
 
     var procedureLogicId = fhirReferenceUtils.extractId(srcProcedure);
-//    var result = Objects.equals(procedureLogicId, "pro-eacbd598-192d-4057-9822-0dabf4e2b720");
-//    if(!result){
-//      return null;
-//    }
     var procedureSourceIdentifier = fhirReferenceUtils.extractResourceFirstIdentifier(srcProcedure);
     if (Strings.isNullOrEmpty(procedureLogicId)
         && Strings.isNullOrEmpty(procedureSourceIdentifier)) {
@@ -358,6 +354,7 @@ public class ProcedureMapper implements FhirMapper<Procedure> {
     List<Pair<String, List<OpsStandardDomainLookup>>> opsStandardMapPairList = null;
     SourceToConceptMap dicomConcept = null;
     Concept snomedConcept = null;
+    Concept iprdConcept = null;
 
     var procedureCodeExist =
         checkIfAnyProcedureCodesExist(procedureCoding, listOfProcedureVocabularyId);
@@ -448,7 +445,7 @@ public class ProcedureMapper implements FhirMapper<Procedure> {
     }else if (procedureVocabularyId.equals(VOCABULARY_IPRD)) {
       // for IPRD codes
 
-      snomedConcept =
+      iprdConcept =
               findOmopConcepts.getConcepts(
                       procedureCoding,
                       procedureStartDatetime.toLocalDate(),
@@ -456,13 +453,13 @@ public class ProcedureMapper implements FhirMapper<Procedure> {
                       dbMappings,
                       procedureId);
 
-      if (snomedConcept == null) {
+      if (iprdConcept == null) {
         return;
       }
 
       procedureProcessor(
               null,
-              snomedConcept,
+              iprdConcept,
               null,
               wrapper,
               procedureBodySiteLocalization,
