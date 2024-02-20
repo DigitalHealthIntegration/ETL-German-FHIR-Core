@@ -27,11 +27,49 @@ import javax.sql.DataSource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.r4.model.Enumerations.ResourceType;
-import org.miracum.etl.fhirtoomop.listeners.*;
-import org.miracum.etl.fhirtoomop.mapper.*;
+import org.miracum.etl.fhirtoomop.listeners.ConditionStepListener;
+import org.miracum.etl.fhirtoomop.listeners.ConsentStepListener;
+import org.miracum.etl.fhirtoomop.listeners.DiagnosticReportStepListener;
+import org.miracum.etl.fhirtoomop.listeners.EncounterDepartmentCaseStepListener;
+import org.miracum.etl.fhirtoomop.listeners.EncounterMainStepListener;
+import org.miracum.etl.fhirtoomop.listeners.FhirResourceProcessListener;
+import org.miracum.etl.fhirtoomop.listeners.FhirToOmopJobListener;
+import org.miracum.etl.fhirtoomop.listeners.ImmunizationStepListener;
+import org.miracum.etl.fhirtoomop.listeners.MedicationAdministrationStepListener;
+import org.miracum.etl.fhirtoomop.listeners.MedicationStatementStepListener;
+import org.miracum.etl.fhirtoomop.listeners.MedicationStepListener;
+import org.miracum.etl.fhirtoomop.listeners.ObservationStepListener;
+import org.miracum.etl.fhirtoomop.listeners.PatientStepListener;
+import org.miracum.etl.fhirtoomop.listeners.PractitionerStepListener;
+import org.miracum.etl.fhirtoomop.listeners.ProcedureStepListener;
+import org.miracum.etl.fhirtoomop.mapper.ConditionMapper;
+import org.miracum.etl.fhirtoomop.mapper.ConsentMapper;
+import org.miracum.etl.fhirtoomop.mapper.DiagnosticReportMapper;
+import org.miracum.etl.fhirtoomop.mapper.EncounterDepartmentCaseMapper;
+import org.miracum.etl.fhirtoomop.mapper.EncounterInstitutionContactMapper;
+import org.miracum.etl.fhirtoomop.mapper.ImmunizationMapper;
+import org.miracum.etl.fhirtoomop.mapper.MedicationAdministrationMapper;
+import org.miracum.etl.fhirtoomop.mapper.MedicationMapper;
+import org.miracum.etl.fhirtoomop.mapper.MedicationStatementMapper;
+import org.miracum.etl.fhirtoomop.mapper.ObservationMapper;
+import org.miracum.etl.fhirtoomop.mapper.PatientMapper;
+import org.miracum.etl.fhirtoomop.mapper.PractitionerMapper;
+import org.miracum.etl.fhirtoomop.mapper.ProcedureMapper;
 import org.miracum.etl.fhirtoomop.model.FhirPsqlResource;
 import org.miracum.etl.fhirtoomop.model.OmopModelWrapper;
-import org.miracum.etl.fhirtoomop.processor.*;
+import org.miracum.etl.fhirtoomop.processor.ConditionProcessor;
+import org.miracum.etl.fhirtoomop.processor.ConsentProcessor;
+import org.miracum.etl.fhirtoomop.processor.DiagnosticReportProcessor;
+import org.miracum.etl.fhirtoomop.processor.EncounterDepartmentCaseProcessor;
+import org.miracum.etl.fhirtoomop.processor.EncounterInstitutionContactProcessor;
+import org.miracum.etl.fhirtoomop.processor.ImmunizationStatusProcessor;
+import org.miracum.etl.fhirtoomop.processor.MedicationAdministrationProcessor;
+import org.miracum.etl.fhirtoomop.processor.MedicationProcessor;
+import org.miracum.etl.fhirtoomop.processor.MedicationStatementProcessor;
+import org.miracum.etl.fhirtoomop.processor.ObservationProcessor;
+import org.miracum.etl.fhirtoomop.processor.PatientProcessor;
+import org.miracum.etl.fhirtoomop.processor.PractitionerProcessor;
+import org.miracum.etl.fhirtoomop.processor.ProcedureProcessor;
 import org.miracum.etl.fhirtoomop.repository.OmopRepository;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
@@ -623,10 +661,10 @@ public class TaskConfiguration {
   }
 
   /**
-   * Defines the reader for FHIR Patient resources.
+   * Defines the reader for FHIR Practitioner resources.
    *
    * @param dataSource the data source to query against
-   * @return reader for FHIR Patient resources
+   * @return reader for FHIR Practitioner resources
    */
   @Bean
   @StepScope
@@ -714,12 +752,12 @@ public class TaskConfiguration {
   }
 
   /**
-   * Defines the step for processing FHIR Patient resources. This step loads and processes Patient
+   * Defines the step for processing FHIR Practitioner resources. This step loads and processes Practitioner
    * resources from FHIR Gateway and writes them to OMOP CDM.
    *
-   * @param patientProcessor processor which maps FHIR Patient resources to OMOP CDM
+   * @param practitionerProcessor processor which maps FHIR Practitioner resources to OMOP CDM
    * @param writer the writer which writes the data to OMOP CDM
-   * @return step for processing FHIR Patient resources
+   * @return step for processing FHIR Practitioner resources
    */
   @Bean
   public Step stepProcessPractitioners(

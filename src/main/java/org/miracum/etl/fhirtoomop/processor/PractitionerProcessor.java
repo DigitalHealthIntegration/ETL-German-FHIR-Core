@@ -17,7 +17,7 @@ public class PractitionerProcessor extends ResourceProcessor<Practitioner> {
     /**
      * Constructor for objects of the class PractitionerProcessor.
      *
-     * @param mapper mapper which maps FHIR Patient resources to OMOP CDM
+     * @param mapper mapper which maps FHIR Practitioner resources to OMOP CDM
      * @param parser parser which converts between the HAPI FHIR model/structure objects and their
      *               respective String wire format (JSON)
      */

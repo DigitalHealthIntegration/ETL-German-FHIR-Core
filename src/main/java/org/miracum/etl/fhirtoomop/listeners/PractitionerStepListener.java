@@ -11,8 +11,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 /**
- * The MedicationStepListener class describes activities to be performed before and after the
- * execution of the step for FHIR Medication resources.
+ * The PractitionerStepListener class describes activities to be performed before and after the
+ * execution of the step for FHIR Practitioner resources.
  *
  * @author Elisa Henke
  * @author Yuan Peng
@@ -29,7 +29,7 @@ public class PractitionerStepListener implements StepExecutionListener {
     private String startSingleStep;
 
     /**
-     * Constructor for objects of the class MedicationStepListener.
+     * Constructor for objects of the class PractitionerStepListener.
      *
      * @param repositories OMOP CDM repositories
      * @param startSingleStep parameter which indicates which steps should be executed
@@ -44,7 +44,7 @@ public class PractitionerStepListener implements StepExecutionListener {
     }
 
     /**
-     * Executes all activities which should take place before the step for FHIR Medication resources
+     * Executes all activities which should take place before the step for FHIR Practitioner resources
      * is executed.
      *
      * @param stepExecution the execution of the step
@@ -55,7 +55,7 @@ public class PractitionerStepListener implements StepExecutionListener {
     }
 
     /**
-     * Executes all activities which should take place after the step for FHIR Medication resources
+     * Executes all activities which should take place after the step for FHIR Practitioner resources
      * has been executed.
      *
      * @param stepExecution the execution of the step
@@ -63,9 +63,6 @@ public class PractitionerStepListener implements StepExecutionListener {
      */
     @Override
     public ExitStatus afterStep(StepExecution stepExecution) {
-//        memoryLogger.logMemoryDebugOnly();
-//        idMappings.getMedicationIds().clear();
-//
         return ExitStatus.COMPLETED;
     }
 }
