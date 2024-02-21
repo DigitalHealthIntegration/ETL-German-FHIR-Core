@@ -43,6 +43,8 @@ public class FhirSystems {
   private static List<String> diagnoseCode;
   private static String ageExtension;
   private static String ethnicGroupExtension;
+  private static String tribeExtension;
+  private static String occupationExtension;
   private static String procedureDicom;
   private static String diagnosisUse;
   private static List<String> vaccineCode;
@@ -79,6 +81,8 @@ public class FhirSystems {
     DIAGNOSECODE(diagnoseCode),
     AGEEXTENSION(ageExtension),
     ETHNICGROUPEXTENSION(ethnicGroupExtension),
+    TRIBEEXTENSION(tribeExtension),
+    OCCUPATIONEXTENSION(occupationExtension),
     PROCEDUREDICOM(procedureDicom),
     MEDICATIONROUTE(medicationRoute),
     DIAGNOSISUSE(diagnosisUse),
@@ -345,6 +349,22 @@ public class FhirSystems {
 
   public void setEthnicGroupExtension(String ethnicGroupExtension) {
     FhirSystems.ethnicGroupExtension = ethnicGroupExtension;
+  }
+
+  public static String getTribeExtension() {
+    return tribeExtension;
+  }
+
+  public static void setTribeExtension(String tribeExtension) {
+    FhirSystems.tribeExtension = tribeExtension;
+  }
+
+  public static String getOccupationExtension() {
+    return occupationExtension;
+  }
+
+  public static void setOccupationExtension(String occupationExtension) {
+    FhirSystems.occupationExtension = occupationExtension;
   }
 
   public String getProcedureDicom() {

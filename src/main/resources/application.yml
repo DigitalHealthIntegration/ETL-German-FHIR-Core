@@ -170,8 +170,9 @@ fhir:
       - "http://loinc.org"
       - "http://terminology.hl7.org/CodeSystem/v2-0074"
     identifier-system:
-      - "http://iprdgroup.com/identifiers/ocl"
-      - "http://iprdgroup.com/identifiers/patient-card"
+    tribe-extension: "http://iprdgroup.org/fhir/extention/tribe"
+    occupation-extension: "http://fhir.org/guides/who/anc-cds/StructureDefinition/occupation"
+
 opentracing:
   jaeger:
     enabled: false
