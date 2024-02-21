@@ -83,7 +83,10 @@ public class OrganizationMapper implements FhirMapper<Organization> {
         }
         var organizationMetaCoding =organizationTag.get();
         var concept = findOmopConcepts.getConcepts(organizationMetaCoding, null,bulkload,dbMappings,organizationId);
-        var placeOfService = concept.getConceptId();
+        Integer placeOfService = null;
+        if(concept != null) {
+            placeOfService = concept.getConceptId();
+        }
         Random random = new Random();
         int generatedPositiveLong = Math.abs(random.nextInt());
 

@@ -1,10 +1,5 @@
 package org.miracum.etl.fhirtoomop.listeners;
 
-import static org.miracum.etl.fhirtoomop.Constants.VOCABULARY_IPRD;
-import static org.miracum.etl.fhirtoomop.Constants.VOCABULARY_LOINC;
-import static org.miracum.etl.fhirtoomop.Constants.VOCABULARY_SNOMED;
-import static org.miracum.etl.fhirtoomop.Constants.VOCABULARY_UCUM;
-
 import com.google.common.base.Strings;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -25,6 +20,8 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StopWatch;
+
+import static org.miracum.etl.fhirtoomop.Constants.*;
 
 /**
  * The ObservationStepListener class describes activities to be performed before and after the
@@ -128,6 +125,10 @@ public class ObservationStepListener implements StepExecutionListener {
           .getOmopConceptMapWrapper()
           .setFindValidSnomedConcept(
               repositories.getConceptRepository().findValidConceptId(VOCABULARY_SNOMED));
+      dbMappings
+              .getOmopConceptMapWrapper()
+              .setFindValidIcd10GmConcept(
+                      repositories.getConceptRepository().findValidConceptId(VOCABULARY_ICD10GM));
     }
     dbMappings.setFindHardCodeConcept(
         repositories.getSourceToConceptRepository().sourceToConceptMap());

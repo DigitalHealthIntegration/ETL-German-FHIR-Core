@@ -430,10 +430,10 @@ public class TaskConfiguration {
       Flow medicationStepsFlow) {
     return new FlowBuilder<SimpleFlow>("bulkload")
             .start(stepProcessOrganization)
-        .start(stepProcessPatients)
+        .next(stepProcessPatients)
         .next(stepProcessEncounterInstitutionContact)
             .next(stepProcessPractitioners)
-            .start(stepProcessPractitionerRole)
+            .next(stepProcessPractitionerRole)
             .next(stepEncounterDepartmentCase)
         .next(medicationStepsFlow)
         .next(stepProcessConditions)

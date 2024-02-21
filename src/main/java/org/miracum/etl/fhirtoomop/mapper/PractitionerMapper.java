@@ -56,8 +56,12 @@ public class PractitionerMapper implements FhirMapper<Practitioner> {
         String fullName = concatenatedGivenNames + " " + familyName;
 
         Date date = resource.getBirthDate();
-        LocalDate localDate = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-        int year = localDate.getYear();
+        Integer year = null;
+        if(date != null) {
+            LocalDate localDate = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+            year = localDate.getYear();
+        }
+
         var practitionerId = fhirReferenceUtils.extractId(resource);
 
 

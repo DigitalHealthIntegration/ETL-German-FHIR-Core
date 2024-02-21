@@ -1,28 +1,5 @@
 package org.miracum.etl.fhirtoomop.mapper;
 
-import static org.miracum.etl.fhirtoomop.Constants.CONCEPT_NO_MATCHING_CONCEPT;
-import static org.miracum.etl.fhirtoomop.Constants.FHIR_RESOURCE_GECCO_OBSERVATION_ACCEPTABLE_VALUE_CODE;
-import static org.miracum.etl.fhirtoomop.Constants.FHIR_RESOURCE_GECCO_OBSERVATION_BLOOD_PRESSURE_CODES;
-import static org.miracum.etl.fhirtoomop.Constants.FHIR_RESOURCE_GECCO_OBSERVATION_ECRF_PARAMETER_DOMAIN_OBSERVATION;
-import static org.miracum.etl.fhirtoomop.Constants.FHIR_RESOURCE_GECCO_OBSERVATION_IN_MEASUREMENT_DOMAIN_CODES;
-import static org.miracum.etl.fhirtoomop.Constants.FHIR_RESOURCE_GECCO_OBSERVATION_SOFA_CODES;
-import static org.miracum.etl.fhirtoomop.Constants.FHIR_RESOURCE_OBSERVATION_ACCEPTABLE_STATUS_LIST;
-import static org.miracum.etl.fhirtoomop.Constants.FHIR_RESOURCE_OBSERVATION_HISTORY_OF_TRAVEL_CODES;
-import static org.miracum.etl.fhirtoomop.Constants.MAX_SOURCE_VALUE_LENGTH;
-import static org.miracum.etl.fhirtoomop.Constants.OMOP_DOMAIN_GENDER;
-import static org.miracum.etl.fhirtoomop.Constants.OMOP_DOMAIN_MEASUREMENT;
-import static org.miracum.etl.fhirtoomop.Constants.OMOP_DOMAIN_OBSERVATION;
-import static org.miracum.etl.fhirtoomop.Constants.OMOP_DOMAIN_PROCEDURE;
-import static org.miracum.etl.fhirtoomop.Constants.SOURCE_VOCABULARY_FRAILTY_SCORE;
-import static org.miracum.etl.fhirtoomop.Constants.SOURCE_VOCABULARY_ID_ECRF_PARAMETER;
-import static org.miracum.etl.fhirtoomop.Constants.SOURCE_VOCABULARY_ID_GENDER;
-import static org.miracum.etl.fhirtoomop.Constants.SOURCE_VOCABULARY_ID_LAB_INTERPRETATION;
-import static org.miracum.etl.fhirtoomop.Constants.SOURCE_VOCABULARY_ID_LAB_RESULT;
-import static org.miracum.etl.fhirtoomop.Constants.SOURCE_VOCABULARY_ID_OBSERVATION_CATEGORY;
-import static org.miracum.etl.fhirtoomop.Constants.SOURCE_VOCABULARY_SOFA_CATEGORY;
-import static org.miracum.etl.fhirtoomop.Constants.VOCABULARY_IPRD;
-import static org.miracum.etl.fhirtoomop.Constants.VOCABULARY_LOINC;
-
 import com.google.common.base.Strings;
 import io.micrometer.core.instrument.Counter;
 import java.math.BigDecimal;
@@ -57,19 +34,18 @@ import org.miracum.etl.fhirtoomop.mapper.helpers.ResourceCheckDataAbsentReason;
 import org.miracum.etl.fhirtoomop.mapper.helpers.ResourceFhirReferenceUtils;
 import org.miracum.etl.fhirtoomop.mapper.helpers.ResourceOmopReferenceUtils;
 import org.miracum.etl.fhirtoomop.mapper.helpers.ResourceOnset;
+import org.miracum.etl.fhirtoomop.model.IcdSnomedDomainLookup;
 import org.miracum.etl.fhirtoomop.model.StandardDomainLookup;
 import org.miracum.etl.fhirtoomop.model.OmopModelWrapper;
 import org.miracum.etl.fhirtoomop.model.PostProcessMap;
-import org.miracum.etl.fhirtoomop.model.omop.Concept;
-import org.miracum.etl.fhirtoomop.model.omop.Measurement;
-import org.miracum.etl.fhirtoomop.model.omop.OmopObservation;
-import org.miracum.etl.fhirtoomop.model.omop.ProcedureOccurrence;
-import org.miracum.etl.fhirtoomop.model.omop.SourceToConceptMap;
+import org.miracum.etl.fhirtoomop.model.omop.*;
 import org.miracum.etl.fhirtoomop.repository.service.ObservationMapperServiceImpl;
 import org.miracum.etl.fhirtoomop.repository.service.OmopConceptServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
+
+import static org.miracum.etl.fhirtoomop.Constants.*;
 
 /**
  * The ObservationMapper class describes the business logic of transforming a FHIR Observation
@@ -660,7 +636,61 @@ public class ObservationMapper implements FhirMapper<Observation> {
                 wrapper,
                 observationId);
       }
+    } else if(observationVocabularyId != null
+            && observationVocabularyId.equals(VOCABULARY_ICD10GM)){
+      // for IPRD
+
+      ArrayList<Coding> codings = new ArrayList<>();
+      codings.add(observationCoding);
+
+      var loincIcdMapPairList =
+              getValidIcdCodes(codings, effectiveDateTime.toLocalDate(), observationId);
+
+      if (loincIcdMapPairList.isEmpty()) {
+        return;
+      }
+      for (var singlePair : loincIcdMapPairList) {
+        observationProcessor(
+                singlePair,
+                null,
+                srcObservation,
+                personId,
+                visitOccId,
+                effectiveDateTime,
+                observationLogicId,
+                observationSourceIdentifier,
+                wrapper,
+                observationId);
+      }
     }
+
+  }
+
+  private List<Pair<String, List<StandardDomainLookup>>> getValidIcdCodes(
+          List<Coding> uncheckedIcds,
+          LocalDate diagnoseDate,
+          String conditionLogicId) {
+    if (uncheckedIcds.isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    List<Pair<String, List<StandardDomainLookup>>> validIcdSnomedConceptMaps = new ArrayList<>();
+    for (var uncheckedCode : uncheckedIcds) {
+      String icdCode = uncheckedCode.getCode();
+      if (icdCode == null) {
+        return Collections.emptyList();
+      }
+
+      List<StandardDomainLookup> icdSnomedMap =
+              findOmopConcepts.getStandardConcepts(
+                      uncheckedCode, diagnoseDate, bulkload, dbMappings, conditionLogicId);
+      if (icdSnomedMap.isEmpty()) {
+        return Collections.emptyList();
+      }
+
+      validIcdSnomedConceptMaps.add(Pair.of(uncheckedCode.getCode(), icdSnomedMap));
+    }
+    return validIcdSnomedConceptMaps;
   }
 
   private void observationProcessor(
@@ -787,7 +817,20 @@ public class ObservationMapper implements FhirMapper<Observation> {
         wrapper.getMeasurement().add(measurement);
 
         break;
+      case OMOP_DOMAIN_CONDITION:
+        var condition =
+                setUpCondition(
+                        effectiveDateTime,
+                        observationConceptId,
+                        observationSourceConceptId,
+                        observationCode,
+                        personId,
+                        observationLogicId,
+                        observationSourceIdentifier,
+                        srcObservation);
 
+        wrapper.getConditionOccurrence().add(condition);
+        break;
       default:
         log.error(
             "[Unsupported domain] {} of code in [Observation]: {}. Skip resource.",
@@ -1227,6 +1270,36 @@ public class ObservationMapper implements FhirMapper<Observation> {
       return null;
     }
     return interpretation.get().getCode();
+  }
+
+  private ConditionOccurrence setUpCondition(
+          LocalDateTime effectiveDateTime,
+          Integer diagnoseConceptId,
+          Integer diagnoseSourceConceptId,
+          String rawIcdCode,
+          Long personId,
+          String conditionLogicId,
+          String conditionSourceIdentifier,
+          Observation srcObservation) {
+    String statusSourceValue = null;
+    if(srcObservation.hasValueStringType()) {
+      statusSourceValue = srcObservation.getValueStringType().getValue();
+    } else if (srcObservation.hasValueCodeableConcept() && srcObservation.getValueCodeableConcept().hasCoding()) {
+      statusSourceValue = srcObservation.getValueCodeableConcept().getCoding().get(0).getCode();
+    }
+
+    return ConditionOccurrence.builder()
+            .personId(personId)
+            .conditionStartDate(effectiveDateTime.toLocalDate())
+            .conditionStartDatetime(effectiveDateTime)
+            .conditionSourceConceptId(diagnoseSourceConceptId)
+            .conditionConceptId(diagnoseConceptId)
+            .conditionTypeConceptId(CONCEPT_EHR)
+            .conditionStatusSourceValue(statusSourceValue)
+            .conditionSourceValue(rawIcdCode)
+            .fhirLogicalId(conditionLogicId)
+            .fhirIdentifier(conditionSourceIdentifier)
+            .build();
   }
 
   /**
