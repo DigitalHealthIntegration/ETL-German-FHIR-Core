@@ -72,13 +72,13 @@ public class EncounterInstitutionContactMapper implements FhirMapper<Encounter> 
   @Autowired ResourceCheckDataAbsentReason checkDataAbsentReason;
 
   private static final Counter noStartDateCounter =
-      MapperMetrics.setNoStartDateCounter("EncounterInstitutionContact");
+      MapperMetrics.setNoStartDateCounter("stepProcessEncounterInstitutionContact");
   private static final Counter noPersonIdCounter =
-      MapperMetrics.setNoPersonIdCounter("EncounterInstitutionContact");
+      MapperMetrics.setNoPersonIdCounter("stepProcessEncounterInstitutionContact");
   private static final Counter noCodeCounter =
-      MapperMetrics.setNoCodeCounter("EncounterInstitutionContact");
+      MapperMetrics.setNoCodeCounter("stepProcessEncounterInstitutionContact");
   private static final Counter noFhirReferenceCounter =
-      MapperMetrics.setNoFhirReferenceCounter("EncounterInstitutionContact");
+      MapperMetrics.setNoFhirReferenceCounter("stepProcessEncounterInstitutionContact");
   private static final Counter deletedFhirReferenceCounter =
       MapperMetrics.setDeletedFhirRessourceCounter("EncounterInstitutionContact");
 
@@ -135,7 +135,7 @@ public class EncounterInstitutionContactMapper implements FhirMapper<Encounter> 
       }
     }
 
-    var statusValue = getStatusValue(srcEncounter);
+    var statusValue = getStatusValue(srcEncounter) == null ? "finished" : getStatusValue(srcEncounter);
     if (Strings.isNullOrEmpty(statusValue)
         || !FHIR_RESOURCE_ENCOUNTER_ACCEPTABLE_STATUS_LIST.contains(statusValue)) {
       log.error(

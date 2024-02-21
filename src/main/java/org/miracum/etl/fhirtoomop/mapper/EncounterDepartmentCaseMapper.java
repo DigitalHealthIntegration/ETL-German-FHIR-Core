@@ -138,7 +138,7 @@ public class EncounterDepartmentCaseMapper implements FhirMapper<Encounter> {
             }
         }
 
-        var statusValue = getStatusValue(srcDepartmentCaseEncounter);
+        var statusValue = getStatusValue(srcDepartmentCaseEncounter) == null ? "finished" : getStatusValue(srcDepartmentCaseEncounter);
         if (Strings.isNullOrEmpty(statusValue)
                 || !FHIR_RESOURCE_ENCOUNTER_ACCEPTABLE_STATUS_LIST.contains(statusValue)) {
             log.error(
@@ -155,8 +155,8 @@ public class EncounterDepartmentCaseMapper implements FhirMapper<Encounter> {
             return null;
         }
 
-        var encounterReferenceIdentifier = getVisitReferenceIdentifier(srcDepartmentCaseEncounter) == null ? "enc-" + srcDepartmentCaseEncounter.getIdentifierFirstRep().getValue() : null;
-        var encounterReferenceLogicalId = getVisitReferenceLogicalId(srcDepartmentCaseEncounter) == null ? "enc-" + srcDepartmentCaseEncounter.getIdElement().getIdPart() : null;
+        var encounterReferenceIdentifier = getVisitReferenceIdentifier(srcDepartmentCaseEncounter) == null ? "enc-" + srcDepartmentCaseEncounter.getIdentifierFirstRep().getValue() : getVisitReferenceIdentifier(srcDepartmentCaseEncounter);
+        var encounterReferenceLogicalId = getVisitReferenceLogicalId(srcDepartmentCaseEncounter) == null ? "enc-" + srcDepartmentCaseEncounter.getIdElement().getIdPart() : getVisitReferenceLogicalId(srcDepartmentCaseEncounter);
         if (encounterReferenceIdentifier == null && encounterReferenceLogicalId == null) {
             log.warn(
                     "Unable to extract [encounter reference] from [Encounter]: {}. Skip resource",
