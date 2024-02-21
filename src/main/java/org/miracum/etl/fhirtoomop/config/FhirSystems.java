@@ -349,19 +349,19 @@ public class FhirSystems {
     FhirSystems.ethnicGroupExtension = ethnicGroupExtension;
   }
 
-  public static String getTribeExtension() {
+  public String getTribeExtension() {
     return tribeExtension;
   }
 
-  public static void setTribeExtension(String tribeExtension) {
+  public void setTribeExtension(String tribeExtension) {
     FhirSystems.tribeExtension = tribeExtension;
   }
 
-  public static String getOccupationExtension() {
+  public String getOccupationExtension() {
     return occupationExtension;
   }
 
-  public static void setOccupationExtension(String occupationExtension) {
+  public void setOccupationExtension(String occupationExtension) {
     FhirSystems.occupationExtension = occupationExtension;
   }
 
