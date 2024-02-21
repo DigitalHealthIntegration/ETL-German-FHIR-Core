@@ -154,6 +154,8 @@ fhir:
     diagnostic-report-category:
       - "http://loinc.org"
       - "http://terminology.hl7.org/CodeSystem/v2-0074"
+    tribe-extension: "http://iprdgroup.org/fhir/extention/tribe"
+    occupation-extension: "http://fhir.org/guides/who/anc-cds/StructureDefinition/occupation"
 
 opentracing:
   jaeger:

@@ -148,6 +148,11 @@ public class PatientMapper implements FhirMapper<Patient> {
     setRaceConcept(ethnicGroupCoding, newPerson, patientLogicId);
     setEthnicityConcept(ethnicGroupCoding, newPerson);
 
+    var tribeCoding = extractTribe(srcPatient);
+    setTribe(tribeCoding, newPerson);
+    var occupationCoding = extractOccupation(srcPatient);
+    setOccupation(occupationCoding, newPerson);
+
     var death = setDeath(srcPatient, patientLogicId, patientSourceIdentifier);
     if (death != null) {
       wrapper.getPostProcessMap().add(death);
@@ -278,6 +283,22 @@ public class PatientMapper implements FhirMapper<Patient> {
         person.setRaceSourceValue(ethnicGroupCode);
       }
     }
+  }
+
+  private void setTribe(Coding tribeCoding, Person person) {
+    if (tribeCoding == null || Strings.isNullOrEmpty(tribeCoding.getCode())) {
+      return;
+    }
+    var tribeCode = tribeCoding.getCode();
+    person.setTribeSourceValue(tribeCode);
+  }
+
+  private void setOccupation(Coding occupationCoding, Person person) {
+    if (occupationCoding == null || Strings.isNullOrEmpty(occupationCoding.getCode())) {
+      return;
+    }
+    var occupationCode = occupationCoding.getCode();
+    person.setOccupationSourceValue(occupationCode);
   }
 
   /**
@@ -596,6 +617,22 @@ public class PatientMapper implements FhirMapper<Patient> {
       return null;
     }
     return ethnicGroupExtension.getValue().castToCoding(ethnicGroupExtension.getValue());
+  }
+
+  private Coding extractTribe(Patient srcPatient) {
+    var tribeExtension = srcPatient.getExtensionByUrl(fhirSystems.getEthnicGroupExtension());
+    if (tribeExtension == null) {
+      return null;
+    }
+    return tribeExtension.getValue().castToCoding(tribeExtension.getValue());
+  }
+
+  private Coding extractOccupation(Patient srcPatient) {
+    var occupationExtension = srcPatient.getExtensionByUrl(fhirSystems.getEthnicGroupExtension());
+    if (occupationExtension == null) {
+      return null;
+    }
+    return occupationExtension.getValue().castToCoding(occupationExtension.getValue());
   }
 
   /**
