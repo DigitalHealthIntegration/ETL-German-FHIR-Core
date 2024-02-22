@@ -169,6 +169,10 @@ public class EncounterInstitutionContactMapper implements FhirMapper<Encounter> 
             institutionContactOnset,
             encounterId);
 
+    if (newVisitOccurrence == null){
+      return null;
+    }
+
     wrapper.setVisitOccurrence(newVisitOccurrence);
 
     var diagnosisInformation =
@@ -321,6 +325,11 @@ public class EncounterInstitutionContactMapper implements FhirMapper<Encounter> 
     var visitTypeConceptId = getVisitTypeConceptId(srcEncounter, endDateTime);
     var visitEndDateTime = setVisitEndDateTime(visitTypeConceptId, endDateTime, encounterId);
     var visitSourceValue = cutString(encounterSourceIdentifier);
+    var careSiteId = getCareSiteId(srcEncounter.getServiceProvider().getReferenceElement().getIdPart());
+    if (careSiteId == null){
+      log.debug("No [CareSite] found for the encounter: {}", encounterId);
+      return null;
+    }
     var visitOccurrence =
         VisitOccurrence.builder()
             .visitStartDate(startDateTime.toLocalDate())
@@ -333,6 +342,7 @@ public class EncounterInstitutionContactMapper implements FhirMapper<Encounter> 
             .visitEndDatetime(visitEndDateTime)
             .visitEndDate(visitEndDateTime.toLocalDate())
             .visitSourceValue(visitSourceValue == null ? null : visitSourceValue.substring(4))
+                .careSiteId(Math.toIntExact(careSiteId))
             .build();
     if (bulkload.equals(Boolean.FALSE)) {
       var existingVisitOccId =
@@ -373,6 +383,19 @@ public class EncounterInstitutionContactMapper implements FhirMapper<Encounter> 
     }
 
     return CONCEPT_EHR;
+  }
+
+  private Long getCareSiteId(String fabCode) {
+
+    if (Strings.isNullOrEmpty(fabCode)) {
+      return null;
+    }
+
+    var careSiteMap = dbMappings.getFindCareSiteId();
+    if (!careSiteMap.containsKey(fabCode)) {
+      return null;
+    }
+    return careSiteMap.get(fabCode).getCareSiteId();
   }
 
   /**

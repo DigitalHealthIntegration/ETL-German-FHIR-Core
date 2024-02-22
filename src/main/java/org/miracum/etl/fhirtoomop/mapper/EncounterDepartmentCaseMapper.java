@@ -306,7 +306,7 @@ public class EncounterDepartmentCaseMapper implements FhirMapper<Encounter> {
             String departmentCaseId) {
         var stations = getStation(srcDepartmentCaseEncounter, departmentCaseId);
 
-        var fabCode = getFabCode(srcDepartmentCaseEncounter, departmentCaseId);
+        var fabCode = getFabCode(srcDepartmentCaseEncounter, departmentCaseId) == null ? srcDepartmentCaseEncounter.getServiceProvider().getReferenceElement().getIdPart() : getFabCode(srcDepartmentCaseEncounter, departmentCaseId);
 
     // Work around for p21 Data format
     if (stations.isEmpty()) {
