@@ -696,33 +696,6 @@ public class ObservationMapper implements FhirMapper<Observation> {
     if (uncheckedIcds.isEmpty()) {
       return Collections.emptyList();
     }
-
-    List<Pair<String, List<StandardDomainLookup>>> validIcdSnomedConceptMaps = new ArrayList<>();
-    for (var uncheckedCode : uncheckedIcds) {
-      String icdCode = uncheckedCode.getCode();
-      if (icdCode == null) {
-        return Collections.emptyList();
-      }
-
-      List<StandardDomainLookup> icdSnomedMap =
-              findOmopConcepts.getStandardConcepts(
-                      uncheckedCode, diagnoseDate, bulkload, dbMappings, conditionLogicId);
-      if (icdSnomedMap.isEmpty()) {
-        return Collections.emptyList();
-      }
-
-      validIcdSnomedConceptMaps.add(Pair.of(uncheckedCode.getCode(), icdSnomedMap));
-    }
-    return validIcdSnomedConceptMaps;
-  }
-
-  private List<Pair<String, List<StandardDomainLookup>>> getValidIcdCodes(
-          List<Coding> uncheckedIcds,
-          LocalDate diagnoseDate,
-          String conditionLogicId) {
-    if (uncheckedIcds.isEmpty()) {
-      return Collections.emptyList();
-    }
     List<Pair<String, List<StandardDomainLookup>>> validIcdSnomedConceptMaps = new ArrayList<>();
     for (var uncheckedCode : uncheckedIcds) {
       String icdCode = uncheckedCode.getCode();
@@ -884,35 +857,6 @@ public class ObservationMapper implements FhirMapper<Observation> {
             observationId);
         break;
     }
-  }
-
-  private ConditionOccurrence setUpCondition(
-          LocalDateTime effectiveDateTime,
-          Integer diagnoseConceptId,
-          Integer diagnoseSourceConceptId,
-          String rawIcdCode,
-          Long personId,
-          String conditionLogicId,
-          String conditionSourceIdentifier,
-          Observation srcObservation) {
-    String statusSourceValue = null;
-    if(srcObservation.hasValueStringType()) {
-      statusSourceValue = srcObservation.getValueStringType().getValue();
-    } else if (srcObservation.hasValueCodeableConcept() && srcObservation.getValueCodeableConcept().hasCoding()) {
-      statusSourceValue = srcObservation.getValueCodeableConcept().getCoding().get(0).getCode();
-    }
-    return ConditionOccurrence.builder()
-            .personId(personId)
-            .conditionStartDate(effectiveDateTime.toLocalDate())
-            .conditionStartDatetime(effectiveDateTime)
-            .conditionSourceConceptId(diagnoseSourceConceptId)
-            .conditionConceptId(diagnoseConceptId)
-            .conditionTypeConceptId(CONCEPT_EHR)
-            .conditionStatusSourceValue(statusSourceValue)
-            .conditionSourceValue(rawIcdCode)
-            .fhirLogicalId(conditionLogicId)
-            .fhirIdentifier(conditionSourceIdentifier)
-            .build();
   }
 
   /**
