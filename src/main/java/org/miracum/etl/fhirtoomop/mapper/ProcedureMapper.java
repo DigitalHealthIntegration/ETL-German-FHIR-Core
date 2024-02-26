@@ -2,6 +2,7 @@ package org.miracum.etl.fhirtoomop.mapper;
 
 import static org.miracum.etl.fhirtoomop.Constants.CONCEPT_EHR;
 import static org.miracum.etl.fhirtoomop.Constants.FHIR_RESOURCE_ACCEPTABLE_EVENT_STATUS_LIST;
+import static org.miracum.etl.fhirtoomop.Constants.OMOP_DOMAIN_CONDITION;
 import static org.miracum.etl.fhirtoomop.Constants.OMOP_DOMAIN_DRUG;
 import static org.miracum.etl.fhirtoomop.Constants.OMOP_DOMAIN_MEASUREMENT;
 import static org.miracum.etl.fhirtoomop.Constants.OMOP_DOMAIN_OBSERVATION;
@@ -11,6 +12,7 @@ import static org.miracum.etl.fhirtoomop.Constants.SOURCE_VOCABULARY_ID_PROCEDUR
 import static org.miracum.etl.fhirtoomop.Constants.VOCABULARY_IPRD;
 import static org.miracum.etl.fhirtoomop.Constants.VOCABULARY_OPS;
 import static org.miracum.etl.fhirtoomop.Constants.VOCABULARY_SNOMED;
+import static org.miracum.etl.fhirtoomop.Constants.VOCABULARY_WHO;
 
 import com.google.common.base.Strings;
 import io.micrometer.core.instrument.Counter;
@@ -39,6 +41,7 @@ import org.miracum.etl.fhirtoomop.mapper.helpers.ResourceOnset;
 import org.miracum.etl.fhirtoomop.model.OmopModelWrapper;
 import org.miracum.etl.fhirtoomop.model.OpsStandardDomainLookup;
 import org.miracum.etl.fhirtoomop.model.omop.Concept;
+import org.miracum.etl.fhirtoomop.model.omop.ConditionOccurrence;
 import org.miracum.etl.fhirtoomop.model.omop.DeviceExposure;
 import org.miracum.etl.fhirtoomop.model.omop.DrugExposure;
 import org.miracum.etl.fhirtoomop.model.omop.Measurement;
@@ -68,7 +71,7 @@ public class ProcedureMapper implements FhirMapper<Procedure> {
   private final Boolean bulkload;
   private final DbMappings dbMappings;
   private final List<String> listOfProcedureVocabularyId =
-      Arrays.asList(SOURCE_VOCABULARY_ID_PROCEDURE_DICOM, VOCABULARY_OPS, VOCABULARY_SNOMED, VOCABULARY_IPRD);
+      Arrays.asList(SOURCE_VOCABULARY_ID_PROCEDURE_DICOM, VOCABULARY_OPS, VOCABULARY_SNOMED, VOCABULARY_IPRD, VOCABULARY_WHO);
 
   private static final Counter noStartDateCounter =
       MapperMetrics.setNoStartDateCounter("stepProcessProcedures");
@@ -118,10 +121,6 @@ public class ProcedureMapper implements FhirMapper<Procedure> {
     var wrapper = new OmopModelWrapper();
 
     var procedureLogicId = fhirReferenceUtils.extractId(srcProcedure);
-//    var result = Objects.equals(procedureLogicId, "pro-eacbd598-192d-4057-9822-0dabf4e2b720");
-//    if(!result){
-//      return null;
-//    }
     var procedureSourceIdentifier = fhirReferenceUtils.extractResourceFirstIdentifier(srcProcedure);
     if (Strings.isNullOrEmpty(procedureLogicId)
         && Strings.isNullOrEmpty(procedureSourceIdentifier)) {
@@ -354,6 +353,8 @@ public class ProcedureMapper implements FhirMapper<Procedure> {
     List<Pair<String, List<OpsStandardDomainLookup>>> opsStandardMapPairList = null;
     SourceToConceptMap dicomConcept = null;
     Concept snomedConcept = null;
+    Concept iprdConcept = null;
+    Concept whoConcept = null;
 
     var procedureCodeExist =
         checkIfAnyProcedureCodesExist(procedureCoding, listOfProcedureVocabularyId);
@@ -444,7 +445,7 @@ public class ProcedureMapper implements FhirMapper<Procedure> {
     }else if (procedureVocabularyId.equals(VOCABULARY_IPRD)) {
       // for IPRD codes
 
-      snomedConcept =
+      iprdConcept =
               findOmopConcepts.getConcepts(
                       procedureCoding,
                       procedureStartDatetime.toLocalDate(),
@@ -452,13 +453,41 @@ public class ProcedureMapper implements FhirMapper<Procedure> {
                       dbMappings,
                       procedureId);
 
-      if (snomedConcept == null) {
+      if (iprdConcept == null) {
         return;
       }
 
       procedureProcessor(
               null,
-              snomedConcept,
+              iprdConcept,
+              null,
+              wrapper,
+              procedureBodySiteLocalization,
+              procedureStartDatetime,
+              procedureLogicId,
+              procedureSourceIdentifier,
+              personId,
+              visitOccId,
+              procedureId);
+    }
+    else if (procedureVocabularyId.equals(VOCABULARY_WHO)) {
+      // for WHO codes
+
+      whoConcept =
+              findOmopConcepts.getConcepts(
+                      procedureCoding,
+                      procedureStartDatetime.toLocalDate(),
+                      bulkload,
+                      dbMappings,
+                      procedureId);
+
+      if (whoConcept == null) {
+        return;
+      }
+
+      procedureProcessor(
+              null,
+              whoConcept,
               null,
               wrapper,
               procedureBodySiteLocalization,
@@ -727,6 +756,22 @@ public class ProcedureMapper implements FhirMapper<Procedure> {
         wrapper.getMeasurement().add(measurement);
 
         break;
+      case OMOP_DOMAIN_CONDITION:
+        var condition =
+                setUpCondition(
+                        procedureStartDatetime,
+                        procedureConceptId,
+                        procedureSourceConceptId,
+                        procedureCode,
+                        personId,
+                        visitOccId,
+                        procedureLogicId,
+                        procedureSourceIdentifier);
+
+        wrapper.getConditionOccurrence().add(condition);
+
+        break;
+
       default:
         //        throw new UnsupportedOperationException(String.format("Unsupported domain %s",
         // domain));
@@ -736,6 +781,30 @@ public class ProcedureMapper implements FhirMapper<Procedure> {
             procedureId);
         break;
     }
+  }
+
+  private ConditionOccurrence setUpCondition(
+          LocalDateTime procedureStartDatetime,
+          Integer diagnoseConceptId,
+          Integer diagnoseSourceConceptId,
+          String rawIcdCode,
+          Long personId,
+          Long visitOccId,
+          String conditionLogicId,
+          String conditionSourceIdentifier) {
+
+    return ConditionOccurrence.builder()
+            .personId(personId)
+            .conditionStartDate(procedureStartDatetime.toLocalDate())
+            .conditionStartDatetime(procedureStartDatetime)
+            .visitOccurrenceId(visitOccId)
+            .conditionSourceConceptId(diagnoseSourceConceptId)
+            .conditionConceptId(diagnoseConceptId)
+            .conditionTypeConceptId(CONCEPT_EHR)
+            .conditionSourceValue(rawIcdCode)
+            .fhirLogicalId(conditionLogicId)
+            .fhirIdentifier(conditionSourceIdentifier)
+            .build();
   }
 
   private ProcedureOccurrence setUpProcedure(
