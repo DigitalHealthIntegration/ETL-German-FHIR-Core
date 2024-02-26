@@ -163,8 +163,9 @@ public class EncounterDepartmentCaseMapper implements FhirMapper<Encounter> {
       return null;
     }
 
-    var encounterReferenceIdentifier = getVisitReferenceIdentifier(srcDepartmentCaseEncounter) == null ? "enc-" + srcDepartmentCaseEncounter.getIdentifierFirstRep().getValue() : getVisitReferenceIdentifier(srcDepartmentCaseEncounter);
-    var encounterReferenceLogicalId = getVisitReferenceLogicalId(srcDepartmentCaseEncounter) == null ? "enc-" + srcDepartmentCaseEncounter.getIdElement().getIdPart() : getVisitReferenceLogicalId(srcDepartmentCaseEncounter);
+    var encounterReferenceIdentifier = getVisitReferenceIdentifier(srcDepartmentCaseEncounter);
+    var encounterReferenceLogicalId = getVisitReferenceLogicalId(srcDepartmentCaseEncounter);
+    encounterReferenceLogicalId = encounterReferenceLogicalId == null ? "enc-" + srcDepartmentCaseEncounter.getIdElement().getIdPart() : encounterReferenceLogicalId;
     if (encounterReferenceIdentifier == null && encounterReferenceLogicalId == null) {
       log.warn(
           "Unable to extract [encounter reference] from [Encounter]: {}. Skip resource",
