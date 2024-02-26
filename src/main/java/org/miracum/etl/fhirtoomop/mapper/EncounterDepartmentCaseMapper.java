@@ -12,12 +12,15 @@ import static org.miracum.etl.fhirtoomop.Constants.SOURCE_VOCABULARY_ID_VISIT_TY
 import ca.uhn.fhir.fhirpath.IFhirPath;
 import com.google.common.base.Strings;
 import io.micrometer.core.instrument.Counter;
+
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.r4.model.Encounter;
 import org.hl7.fhir.r4.model.Encounter.EncounterLocationComponent;
@@ -69,6 +72,18 @@ public class EncounterDepartmentCaseMapper implements FhirMapper<Encounter> {
       MapperMetrics.setNoFhirReferenceCounter("stepProcessEncounterDepartmentCase");
   private static final Counter deletedFhirReferenceCounter =
       MapperMetrics.setDeletedFhirRessourceCounter("stepProcessEncounterDepartmentCase");
+  private static final Counter statusNotAcceptableCounter =
+          MapperMetrics.setStatusNotAcceptableCounter("stepProcessEncounterDepartmentCase");
+  private static final Counter unableToExtractCounter =
+          MapperMetrics.setUnableToExtractResourceCounter("stepProcessEncounterDepartmentCase");
+  private static final Counter noMatchingVisitOccurenceCounter =
+          MapperMetrics.setNoMatchingVisitOccurenceCounter("stepProcessEncounterDepartmentCase");
+  private static final Counter noStartDateFoundInLocationCounter =
+          MapperMetrics.setNoStartDateFoundInLocationCounter("stepProcessEncounterDepartmentCase");
+  private static final Counter noLocationReferenceFoundCounter =
+          MapperMetrics.setNoLocationReferenceFoundCounter("stepProcessEncounterDepartmentCase");
+  private static final Counter noDepartmentCodeFoundCounter =
+          MapperMetrics.setNoDepartmentCodeFoundCounter("stepProcessEncounterDepartmentCase");
 
   /**
    * Constructor for objects of the class EncounterDepartmentCaseMapper.
@@ -137,6 +152,7 @@ public class EncounterDepartmentCaseMapper implements FhirMapper<Encounter> {
           "The [status]: {} of {} is not acceptable for writing into OMOP CDM. Skip resource.",
           statusValue,
           departmentCaseId);
+      statusNotAcceptableCounter.increment();
       return null;
     }
 
@@ -149,10 +165,12 @@ public class EncounterDepartmentCaseMapper implements FhirMapper<Encounter> {
 
     var encounterReferenceIdentifier = getVisitReferenceIdentifier(srcDepartmentCaseEncounter);
     var encounterReferenceLogicalId = getVisitReferenceLogicalId(srcDepartmentCaseEncounter);
+    encounterReferenceLogicalId = encounterReferenceLogicalId == null ? "enc-" + srcDepartmentCaseEncounter.getIdElement().getIdPart() : encounterReferenceLogicalId;
     if (encounterReferenceIdentifier == null && encounterReferenceLogicalId == null) {
       log.warn(
           "Unable to extract [encounter reference] from [Encounter]: {}. Skip resource",
           departmentCaseId);
+      unableToExtractCounter.increment();
       return null;
     }
 
@@ -163,6 +181,7 @@ public class EncounterDepartmentCaseMapper implements FhirMapper<Encounter> {
       log.error(
           "No matching [VisitOccurrence] found for [Encounter]: {}. Skip resource",
           departmentCaseId);
+      noMatchingVisitOccurenceCounter.increment();
       return null;
     }
 
@@ -397,12 +416,17 @@ public class EncounterDepartmentCaseMapper implements FhirMapper<Encounter> {
 
       var locationStartDateTime = locationOnset.getStartDateTime();
       var locationEndDateTime = locationOnset.getEndDateTime();
+      if (locationStartDateTime == null){
+          locationStartDateTime = srcDepartmentCaseEncounter.getPeriod().getStart().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+      } if (locationEndDateTime == null){
+          locationEndDateTime = srcDepartmentCaseEncounter.getPeriod().getEnd().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+        }
       if (locationStartDateTime == null) {
 
         log.warn(
             "No [start date] found for [Location] in [Encounter]: {}. Skip the [Location].",
             departmentCaseId);
-
+        noStartDateFoundInLocationCounter.increment();
         continue;
       }
 
@@ -442,6 +466,7 @@ public class EncounterDepartmentCaseMapper implements FhirMapper<Encounter> {
       log.warn(
           "No [Location Reference] found. [Encounter]: {} is invalid. Please check.",
           departmentCaseId);
+      noLocationReferenceFoundCounter.increment();
       return Collections.emptyList();
     }
     return srcDepartmentCaseEncounter.getLocation();
@@ -505,6 +530,7 @@ public class EncounterDepartmentCaseMapper implements FhirMapper<Encounter> {
             .findAny();
     if (fabSourceValue.isEmpty()) {
       log.debug("No department [FAB] code found for [Encounter]: {}.", departmentCaseId);
+      noDepartmentCodeFoundCounter.increment();
       return null;
     }
     return fabSourceValue.get().getCode();

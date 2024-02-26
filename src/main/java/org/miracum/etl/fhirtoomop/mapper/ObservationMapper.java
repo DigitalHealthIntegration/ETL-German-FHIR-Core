@@ -1,5 +1,6 @@
 package org.miracum.etl.fhirtoomop.mapper;
 
+import static org.miracum.etl.fhirtoomop.Constants.CONCEPT_EHR;
 import static org.miracum.etl.fhirtoomop.Constants.CONCEPT_NO_MATCHING_CONCEPT;
 import static org.miracum.etl.fhirtoomop.Constants.FHIR_RESOURCE_GECCO_OBSERVATION_ACCEPTABLE_VALUE_CODE;
 import static org.miracum.etl.fhirtoomop.Constants.FHIR_RESOURCE_GECCO_OBSERVATION_BLOOD_PRESSURE_CODES;
@@ -9,6 +10,7 @@ import static org.miracum.etl.fhirtoomop.Constants.FHIR_RESOURCE_GECCO_OBSERVATI
 import static org.miracum.etl.fhirtoomop.Constants.FHIR_RESOURCE_OBSERVATION_ACCEPTABLE_STATUS_LIST;
 import static org.miracum.etl.fhirtoomop.Constants.FHIR_RESOURCE_OBSERVATION_HISTORY_OF_TRAVEL_CODES;
 import static org.miracum.etl.fhirtoomop.Constants.MAX_SOURCE_VALUE_LENGTH;
+import static org.miracum.etl.fhirtoomop.Constants.OMOP_DOMAIN_CONDITION;
 import static org.miracum.etl.fhirtoomop.Constants.OMOP_DOMAIN_GENDER;
 import static org.miracum.etl.fhirtoomop.Constants.OMOP_DOMAIN_MEASUREMENT;
 import static org.miracum.etl.fhirtoomop.Constants.OMOP_DOMAIN_OBSERVATION;
@@ -20,7 +22,10 @@ import static org.miracum.etl.fhirtoomop.Constants.SOURCE_VOCABULARY_ID_LAB_INTE
 import static org.miracum.etl.fhirtoomop.Constants.SOURCE_VOCABULARY_ID_LAB_RESULT;
 import static org.miracum.etl.fhirtoomop.Constants.SOURCE_VOCABULARY_ID_OBSERVATION_CATEGORY;
 import static org.miracum.etl.fhirtoomop.Constants.SOURCE_VOCABULARY_SOFA_CATEGORY;
+import static org.miracum.etl.fhirtoomop.Constants.VOCABULARY_ICD10GM;
+import static org.miracum.etl.fhirtoomop.Constants.VOCABULARY_IPRD;
 import static org.miracum.etl.fhirtoomop.Constants.VOCABULARY_LOINC;
+import static org.miracum.etl.fhirtoomop.Constants.VOCABULARY_WHO;
 
 import com.google.common.base.Strings;
 import io.micrometer.core.instrument.Counter;
@@ -31,16 +36,22 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.hl7.fhir.r4.model.BooleanType;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
+import org.hl7.fhir.r4.model.DateTimeType;
 import org.hl7.fhir.r4.model.Enumerations.ResourceType;
+import org.hl7.fhir.r4.model.IntegerType;
 import org.hl7.fhir.r4.model.Observation;
 import org.hl7.fhir.r4.model.Observation.ObservationComponentComponent;
 import org.hl7.fhir.r4.model.Observation.ObservationReferenceRangeComponent;
 import org.hl7.fhir.r4.model.Quantity;
+import org.hl7.fhir.r4.model.StringType;
 import org.hl7.fhir.r4.model.Type;
 import org.miracum.etl.fhirtoomop.DbMappings;
 import org.miracum.etl.fhirtoomop.config.FhirSystems;
@@ -50,10 +61,12 @@ import org.miracum.etl.fhirtoomop.mapper.helpers.ResourceCheckDataAbsentReason;
 import org.miracum.etl.fhirtoomop.mapper.helpers.ResourceFhirReferenceUtils;
 import org.miracum.etl.fhirtoomop.mapper.helpers.ResourceOmopReferenceUtils;
 import org.miracum.etl.fhirtoomop.mapper.helpers.ResourceOnset;
-import org.miracum.etl.fhirtoomop.model.LoincStandardDomainLookup;
+import org.miracum.etl.fhirtoomop.model.IcdSnomedDomainLookup;
+import org.miracum.etl.fhirtoomop.model.StandardDomainLookup;
 import org.miracum.etl.fhirtoomop.model.OmopModelWrapper;
 import org.miracum.etl.fhirtoomop.model.PostProcessMap;
 import org.miracum.etl.fhirtoomop.model.omop.Concept;
+import org.miracum.etl.fhirtoomop.model.omop.ConditionOccurrence;
 import org.miracum.etl.fhirtoomop.model.omop.Measurement;
 import org.miracum.etl.fhirtoomop.model.omop.OmopObservation;
 import org.miracum.etl.fhirtoomop.model.omop.ProcedureOccurrence;
@@ -99,6 +112,28 @@ public class ObservationMapper implements FhirMapper<Observation> {
       MapperMetrics.setNoFhirReferenceCounter("stepProcessObservations");
   private static final Counter deletedFhirReferenceCounter =
       MapperMetrics.setDeletedFhirRessourceCounter("stepProcessObservations");
+  private static final Counter statusErrorCounter =
+          MapperMetrics.setStatusErrorCounter("stepProcessObservations");
+  private static final Counter noMatchingEncounterCounter =
+          MapperMetrics.setNoMatchingEncounterCount("stepProcessObservations");
+  private static final Counter noResultHistoryOfTravelCounter =
+          MapperMetrics.setNoResultHistoryTravelFoundCount("stepProcessObservations");
+  private static final Counter noAcceptableResultHistoryOfTravelCounter =
+          MapperMetrics.setNoAcceptableResultHistoryOfTravelFoundCount("stepProcessObservations");
+  private static final Counter noAvailableInfoHistoryOfTravelCounter =
+          MapperMetrics.setAvailableInfoHistoryOfTravelNotFoundCount("stepProcessObservations");
+  private static final Counter noValueCounter =
+          MapperMetrics.setValueNotFoundCount("stepProcessObservations");
+  private static final Counter noInterpretationCounter =
+          MapperMetrics.setNoInterpretationFoundCount("stepProcessObservations");
+  private static final Counter noReferenceRangeCounter =
+          MapperMetrics.setNoReferenceRangeFoundCount("stepProcessObservations");
+  private static final Counter missingHighRangeCounter =
+          MapperMetrics.setMissingHighRangeCount("stepProcessObservations");
+  private static final Counter missingLowRangeCounter =
+          MapperMetrics.setMissingLowRangeCount("stepProcessObservations");
+  private static final Counter noCategoryCount =
+          MapperMetrics.setCategoryNotFoundCount("stepProcessObservations");
 
   /**
    * Constructor for objects of the class ObservationMapper.
@@ -130,6 +165,10 @@ public class ObservationMapper implements FhirMapper<Observation> {
     var wrapper = new OmopModelWrapper();
 
     var observationLogicId = fhirReferenceUtils.extractId(srcObservation);
+//    var result = Objects.equals(observationLogicId, "obs-4283158f-7e61-436e-bb3d-67558e677cb5");
+//    if(!result){
+//      return null;
+//    }
     var observationSourceIdentifier =
         fhirReferenceUtils.extractResourceFirstIdentifier(srcObservation);
     if (StringUtils.isBlank(observationLogicId)
@@ -158,11 +197,12 @@ public class ObservationMapper implements FhirMapper<Observation> {
     var statusValue = checkDataAbsentReason.getValue(statusElement);
     if (Strings.isNullOrEmpty(statusValue)
         || !FHIR_RESOURCE_OBSERVATION_ACCEPTABLE_STATUS_LIST.contains(statusValue)) {
+      statusValue  = "final";
       log.error(
           "The [status]: {} of {} is not acceptable for writing into OMOP CDM. Skip resource.",
           statusValue,
           observationId);
-      return null;
+//      return null;
     }
 
     var personId = getPersonId(srcObservation, observationLogicId, observationId);
@@ -241,6 +281,7 @@ public class ObservationMapper implements FhirMapper<Observation> {
             encounterReferenceIdentifier, encounterReferenceLogicalId, personId, observationId);
     if (visitOccId == null) {
       log.debug("No matching [Encounter] found for [Observation]: {}.", observationId);
+      noMatchingEncounterCounter.increment();
     }
 
     return visitOccId;
@@ -308,6 +349,7 @@ public class ObservationMapper implements FhirMapper<Observation> {
       log.debug(
           "No [result for History-of-travel] found in [Observation]: {}. Skip resource.",
           observationId);
+      noResultHistoryOfTravelCounter.increment();
       return;
     }
     var value =
@@ -321,12 +363,14 @@ public class ObservationMapper implements FhirMapper<Observation> {
       log.debug(
           "No [acceptable result for History-of-travel] found in [Observation]: {}. Skip resource.",
           observationId);
+      noAcceptableResultHistoryOfTravelCounter.increment();
       return;
     }
     if (!srcObservation.hasComponent()) {
       log.debug(
           "No [available information for History-of-travel] found in [Observation]: {}. Skip resource.",
           observationId);
+      noAvailableInfoHistoryOfTravelCounter.increment();
       return;
     }
 
@@ -335,6 +379,7 @@ public class ObservationMapper implements FhirMapper<Observation> {
       log.debug(
           "No [available information for History-of-travel] found in [Observation]: {}. Skip resource.",
           observationId);
+      noAvailableInfoHistoryOfTravelCounter.increment();
       return;
     }
 
@@ -539,8 +584,8 @@ public class ObservationMapper implements FhirMapper<Observation> {
       String observationSourceIdentifier,
       String observationId) {
     Concept observationCodeConcept = null;
-    List<Pair<String, List<LoincStandardDomainLookup>>> loincStandardMapPairList = null;
-
+    List<Pair<String, List<StandardDomainLookup>>> loincStandardMapPairList = null;
+    List<Pair<String, List<IcdSnomedDomainLookup>>> icdSnomedMapPairList = null;
     var observationVocabularyId =
         findOmopConcepts.getOmopVocabularyId(observationCoding.getSystem());
 
@@ -584,7 +629,7 @@ public class ObservationMapper implements FhirMapper<Observation> {
       // for LOINC
 
       loincStandardMapPairList =
-          getValidLoincCodes(observationCoding, effectiveDateTime.toLocalDate(), observationId);
+          getValidCodes(observationCoding, effectiveDateTime.toLocalDate(), observationId);
 
       if (loincStandardMapPairList.isEmpty()) {
         return;
@@ -602,11 +647,105 @@ public class ObservationMapper implements FhirMapper<Observation> {
             wrapper,
             observationId);
       }
+    } else if(observationVocabularyId != null
+            && observationVocabularyId.equals(VOCABULARY_IPRD)){
+      // for IPRD
+
+      loincStandardMapPairList =
+              getValidCodes(observationCoding, effectiveDateTime.toLocalDate(), observationId);
+
+      if (loincStandardMapPairList.isEmpty()) {
+        return;
+      }
+      for (var singlePair : loincStandardMapPairList) {
+        observationProcessor(
+                singlePair,
+                null,
+                srcObservation,
+                personId,
+                visitOccId,
+                effectiveDateTime,
+                observationLogicId,
+                observationSourceIdentifier,
+                wrapper,
+                observationId);
+      }
+    }
+    else if(observationVocabularyId != null
+            && observationVocabularyId.equals(VOCABULARY_WHO)){
+      // for WHO
+
+      loincStandardMapPairList =
+              getValidCodes(observationCoding, effectiveDateTime.toLocalDate(), observationId);
+
+      if (loincStandardMapPairList.isEmpty()) {
+        return;
+      }
+      for (var singlePair : loincStandardMapPairList) {
+        observationProcessor(
+                singlePair,
+                null,
+                srcObservation,
+                personId,
+                visitOccId,
+                effectiveDateTime,
+                observationLogicId,
+                observationSourceIdentifier,
+                wrapper,
+                observationId);
+      }
+    }else if(observationVocabularyId != null
+            && observationVocabularyId.equals(VOCABULARY_ICD10GM)){
+      // for IPRD
+      ArrayList<Coding> codings = new ArrayList<>();
+      codings.add(observationCoding);
+      var loincIcdMapPairList =
+              getValidIcdCodes(codings, effectiveDateTime.toLocalDate(), observationId);
+      if (loincIcdMapPairList.isEmpty()) {
+        return;
+      }
+      for (var singlePair : loincIcdMapPairList) {
+        observationProcessor(
+                singlePair,
+                null,
+                srcObservation,
+                personId,
+                visitOccId,
+                effectiveDateTime,
+                observationLogicId,
+                observationSourceIdentifier,
+                wrapper,
+                observationId);
+      }
     }
   }
 
+  private List<Pair<String, List<StandardDomainLookup>>> getValidIcdCodes(
+          List<Coding> uncheckedIcds,
+          LocalDate diagnoseDate,
+          String conditionLogicId) {
+    if (uncheckedIcds.isEmpty()) {
+      return Collections.emptyList();
+    }
+    List<Pair<String, List<StandardDomainLookup>>> validIcdSnomedConceptMaps = new ArrayList<>();
+    for (var uncheckedCode : uncheckedIcds) {
+      String icdCode = uncheckedCode.getCode();
+      if (icdCode == null) {
+        return Collections.emptyList();
+      }
+      List<StandardDomainLookup> icdSnomedMap =
+              findOmopConcepts.getStandardConcepts(
+                      uncheckedCode, diagnoseDate, bulkload, dbMappings, conditionLogicId);
+      if (icdSnomedMap.isEmpty()) {
+        return Collections.emptyList();
+      }
+      validIcdSnomedConceptMaps.add(Pair.of(uncheckedCode.getCode(), icdSnomedMap));
+    }
+    return validIcdSnomedConceptMaps;
+  }
+
   private void observationProcessor(
-      @Nullable Pair<String, List<LoincStandardDomainLookup>> loincStandardPair,
+      @Nullable Pair<String, List<StandardDomainLookup>> loincStandardPair,
       @Nullable Concept observationCodeConcept,
       Observation srcObservation,
       Long personId,
@@ -671,6 +810,10 @@ public class ObservationMapper implements FhirMapper<Observation> {
       Integer observationSourceConceptId,
       String domain,
       String observationId) {
+    if(domain == null){
+      log.warn("fhirId = {}={}",observationId,domain);
+      return;
+    }
     switch (domain) {
       case OMOP_DOMAIN_PROCEDURE:
         var procedure =
@@ -725,6 +868,20 @@ public class ObservationMapper implements FhirMapper<Observation> {
         wrapper.getMeasurement().add(measurement);
 
         break;
+      case OMOP_DOMAIN_CONDITION:
+        var condition =
+                setUpCondition(
+                        effectiveDateTime,
+                        observationConceptId,
+                        observationSourceConceptId,
+                        observationCode,
+                        personId,
+                        visitOccId,
+                        observationLogicId,
+                        observationSourceIdentifier,
+                        srcObservation);
+        wrapper.getConditionOccurrence().add(condition);
+        break;
       default:
         log.error(
             "[Unsupported domain] {} of code in [Observation]: {}. Skip resource.",
@@ -732,6 +889,37 @@ public class ObservationMapper implements FhirMapper<Observation> {
             observationId);
         break;
     }
+  }
+
+  private ConditionOccurrence setUpCondition(
+          LocalDateTime effectiveDateTime,
+          Integer diagnoseConceptId,
+          Integer diagnoseSourceConceptId,
+          String rawIcdCode,
+          Long personId,
+          Long visitOccId,
+          String conditionLogicId,
+          String conditionSourceIdentifier,
+          Observation srcObservation) {
+    String statusSourceValue = null;
+    if(srcObservation.hasValueStringType()) {
+      statusSourceValue = srcObservation.getValueStringType().getValue();
+    } else if (srcObservation.hasValueCodeableConcept() && srcObservation.getValueCodeableConcept().hasCoding()) {
+      statusSourceValue = srcObservation.getValueCodeableConcept().getCoding().get(0).getCode();
+    }
+    return ConditionOccurrence.builder()
+            .personId(personId)
+            .visitOccurrenceId(visitOccId)
+            .conditionStartDate(effectiveDateTime.toLocalDate())
+            .conditionStartDatetime(effectiveDateTime)
+            .conditionSourceConceptId(diagnoseSourceConceptId)
+            .conditionConceptId(diagnoseConceptId)
+            .conditionTypeConceptId(CONCEPT_EHR)
+            .conditionStatusSourceValue(statusSourceValue)
+            .conditionSourceValue(rawIcdCode)
+            .fhirLogicalId(conditionLogicId)
+            .fhirIdentifier(conditionSourceIdentifier)
+            .build();
   }
 
   /**
@@ -784,6 +972,7 @@ public class ObservationMapper implements FhirMapper<Observation> {
       log.debug(
           "No [ValueQuantity] or [ValueCodeableConcept] found for [Observation]: {}. Skip resource.",
           observationId);
+      noValueCounter.increment();
       return null;
     }
     if (valueQuantity != null) {
@@ -852,21 +1041,38 @@ public class ObservationMapper implements FhirMapper<Observation> {
             observationId);
     var valueQuantity = getValueQuantity(srcObservation);
     var valueCodeableConcept = getValueCodeableConcept(srcObservation);
+    var valueIntegerType = getValueInteger(srcObservation);
+    var valueStringType = getValueStringType(srcObservation);
+    var valueDateTimeType = getValueDateTimeType(srcObservation);
+    var valueBooleanType = getValueBooleanType(srcObservation);
 
-    if (valueQuantity == null && valueCodeableConcept == null) {
+    if (valueQuantity == null && valueCodeableConcept == null && valueIntegerType == null && valueStringType == null && valueDateTimeType == null && valueBooleanType == null) {
       log.debug(
-          "No [ValueQuantity] or [ValueCodeableConcept] found for [Observation]: {}. Skip resource.",
+          "No [Value] found for [Observation]: {}. Skip resource.",
           observationId);
+      noValueCounter.increment();
       return null;
     }
     if (valueQuantity != null) {
       setValueQuantityInObservation(
           effectiveDateTime, observations, basisObservation, valueQuantity, observationId);
-    } else {
+    } else if (valueCodeableConcept != null) {
       setValueCodeableConceptInObservation(
           effectiveDateTime, observations, basisObservation, valueCodeableConcept, observationId);
+    } else if(valueIntegerType != null){
+//      log.info("value = {} - observation id = {}",valueIntegerType,observationId);
+      var integerToBigDecimal = new BigDecimal(String.valueOf(valueIntegerType.getValue()));
+      basisObservation.setValueAsNumber(integerToBigDecimal);
+    } else if(valueStringType != null){
+      log.info("value = {} - observation id = {}",valueStringType,observationId);
+      var processedValue = valueStringType.getValue().replaceAll("\n"," ").substring(0,Math.min(valueStringType.getValue().length(),60));
+      basisObservation.setValueAsString(processedValue);
+    } else if(valueBooleanType != null){
+      basisObservation.setValueAsBoolean(valueBooleanType.getValue());
+    } else {
+      var localDateTime = new Timestamp(valueDateTimeType.getValue().getTime()).toLocalDateTime();
+      basisObservation.setValueAsDateTime(localDateTime);
     }
-
     return basisObservation;
   }
 
@@ -1134,6 +1340,7 @@ public class ObservationMapper implements FhirMapper<Observation> {
   private String getInterpretation(Observation srcObservation, String observationId) {
     if (!srcObservation.hasInterpretation() || srcObservation.getInterpretation().isEmpty()) {
       log.debug("No [Interpretation] found in [Observation]: {}.", observationId);
+      noInterpretationCounter.increment();
       return null;
     }
     var interpretation =
@@ -1143,6 +1350,7 @@ public class ObservationMapper implements FhirMapper<Observation> {
 
     if (interpretation.isEmpty()) {
       log.debug("No [Interpretation] found in [Observation]: {}.", observationId);
+      noInterpretationCounter.increment();
       return null;
     }
     return interpretation.get().getCode();
@@ -1213,6 +1421,7 @@ public class ObservationMapper implements FhirMapper<Observation> {
       log.debug(
           "No [ValueQuantity] or [ValueCodeableConcept] found for [Observation]: {}. Skip resource.",
           observationId);
+      noValueCounter.increment();
       return null;
     }
     if (valueQuantity != null) {
@@ -1652,6 +1861,7 @@ public class ObservationMapper implements FhirMapper<Observation> {
 
     if (referenceRange == null) {
       log.debug("No [Reference Range] found in [Observation]: {}.", observationId);
+      noReferenceRangeCounter.increment();
       return;
     }
 
@@ -1659,12 +1869,14 @@ public class ObservationMapper implements FhirMapper<Observation> {
       newLabMeasurement.setRangeHigh(referenceRange.getHigh().getValue());
     } else {
       log.debug("Missing [high range] for [Observation]: {}.", observationId);
+      missingHighRangeCounter.increment();
     }
 
     if (referenceRange.hasLow() && referenceRange.getLow() != null) {
       newLabMeasurement.setRangeLow(referenceRange.getLow().getValue());
     } else {
       log.debug("Missing [low range] for [Observation]: {}.", observationId);
+      missingLowRangeCounter.increment();
     }
   }
 
@@ -1693,6 +1905,7 @@ public class ObservationMapper implements FhirMapper<Observation> {
       log.warn(
           "No [Category] found for [Observation]: {}. Invalid resource. Please Check.",
           observationId);
+      noCategoryCount.increment();
       return null;
     }
     var categories = srcObservation.getCategory();
@@ -1729,27 +1942,55 @@ public class ObservationMapper implements FhirMapper<Observation> {
   /**
    * Extract valid pairs of LOINC code and its OMOP concept_id and domain information as a list
    *
-   * @param loincCoding
+   * @param coding
    * @param observationDate the date of observation
    * @return a list of valid pairs of LOINC code and its OMOP concept_id and domain information
    */
-  private List<Pair<String, List<LoincStandardDomainLookup>>> getValidLoincCodes(
-      Coding loincCoding, LocalDate observationDate, String observationId) {
-    if (loincCoding == null) {
+  private List<Pair<String, List<StandardDomainLookup>>> getValidCodes(
+      Coding coding, LocalDate observationDate, String observationId) {
+    if (coding == null) {
       return Collections.emptyList();
     }
 
-    List<Pair<String, List<LoincStandardDomainLookup>>> validLoincStandardConceptMaps =
+    List<Pair<String, List<StandardDomainLookup>>> validStandardConceptMaps =
         new ArrayList<>();
-    List<LoincStandardDomainLookup> loincStandardMap =
-        findOmopConcepts.getLoincStandardConcepts(
-            loincCoding, observationDate, bulkload, dbMappings, observationId);
-    if (loincStandardMap.isEmpty()) {
+    List<StandardDomainLookup> standardMap =
+        findOmopConcepts.getStandardConcepts(
+            coding, observationDate, bulkload, dbMappings, observationId);
+    if (standardMap.isEmpty()) {
       return Collections.emptyList();
     }
 
-    validLoincStandardConceptMaps.add(Pair.of(loincCoding.getCode(), loincStandardMap));
+    validStandardConceptMaps.add(Pair.of(coding.getCode(), standardMap));
 
-    return validLoincStandardConceptMaps;
+    return validStandardConceptMaps;
+  }
+
+  private IntegerType getValueInteger(Observation srcObservation) {
+    if (srcObservation.hasValueIntegerType() && srcObservation.getValueIntegerType() != null) {
+      return srcObservation.getValueIntegerType();
+    }
+    return null;
+  }
+
+  private StringType getValueStringType(Observation srcObservation) {
+    if (srcObservation.hasValueStringType() && srcObservation.getValueStringType() != null) {
+      return srcObservation.getValueStringType();
+    }
+    return null;
+  }
+
+  private DateTimeType getValueDateTimeType(Observation srcObservation) {
+    if (srcObservation.hasValueDateTimeType() && srcObservation.getValueDateTimeType() != null) {
+      return srcObservation.getValueDateTimeType();
+    }
+    return null;
+  }
+
+  private BooleanType getValueBooleanType(Observation srcObservation) {
+    if (srcObservation.hasValueBooleanType() && srcObservation.getValueBooleanType() != null) {
+      return srcObservation.getValueBooleanType();
+    }
+    return null;
   }
 }

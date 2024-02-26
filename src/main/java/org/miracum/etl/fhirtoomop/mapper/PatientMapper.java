@@ -74,6 +74,12 @@ public class PatientMapper implements FhirMapper<Patient> {
       MapperMetrics.setNoFhirReferenceCounter("stepProcessPatients");
   private static final Counter deletedFhirReferenceCounter =
       MapperMetrics.setDeletedFhirRessourceCounter("stepProcessPatients");
+  private static final Counter noBirthDateFoundCounter =
+          MapperMetrics.setNoBirthDateFoundCounter("stepProcessPatients");
+  private static final Counter invalidStringLengthCounter =
+          MapperMetrics.setInvalidStringLengthCounter("stepProcessPatients");
+  private static final Counter invalidBirthDateCounter =
+          MapperMetrics.setInvalidBirthDateCounter("stepProcessPatients");
 
   /**
    * Constructor for objects of the class PatientMapper.
@@ -124,6 +130,7 @@ public class PatientMapper implements FhirMapper<Patient> {
 
     if (realBirthDate == null && calculatedBirthDate == null) {
       log.info("No [Birthdate] found for [Patient]: {}. Skip Resource.", patientId);
+      noBirthDateFoundCounter.increment();
       if (bulkload.equals(Boolean.FALSE)) {
         deleteExistingPatients(patientLogicId, patientSourceIdentifier);
       }
@@ -462,6 +469,7 @@ public class PatientMapper implements FhirMapper<Patient> {
           "The String: {} is longer than allowed. Cut it to a length of {}.",
           stringToBeCut,
           maxLength);
+      invalidStringLengthCounter.increment();
       return StringUtils.left(stringToBeCut, maxLength);
     }
     return stringToBeCut;
@@ -539,6 +547,7 @@ public class PatientMapper implements FhirMapper<Patient> {
         return documentationDateTime.minusDays(age);
       default:
         log.warn("Unable to calculate [Birthdate] for [Patient]: {}.", patientId);
+        invalidBirthDateCounter.increment();
         return null;
     }
   }
