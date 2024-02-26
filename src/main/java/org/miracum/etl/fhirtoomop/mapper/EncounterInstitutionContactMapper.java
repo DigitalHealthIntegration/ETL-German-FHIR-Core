@@ -167,7 +167,7 @@ public class EncounterInstitutionContactMapper implements FhirMapper<Encounter> 
     String visitOccurrenceReason = null;
     var srcEncounterMeta = srcEncounter.getMeta();
     if (srcEncounterMeta.hasTag()){
-      srcEncounterMeta.getTagFirstRep().getDisplay();
+      visitOccurrenceReason = srcEncounterMeta.getTagFirstRep().getDisplay();
     } else{
       visitOccurrenceReason = srcEncounter.getClass_().getDisplay();
     }
