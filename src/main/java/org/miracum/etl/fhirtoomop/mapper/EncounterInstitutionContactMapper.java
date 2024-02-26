@@ -164,7 +164,13 @@ public class EncounterInstitutionContactMapper implements FhirMapper<Encounter> 
       noStartDateCounter.increment();
       return null;
     }
-
+    String visitOccurrenceReason = null;
+    var srcEncounterMeta = srcEncounter.getMeta();
+    if (srcEncounterMeta.hasTag()){
+      srcEncounterMeta.getTagFirstRep().getDisplay();
+    } else{
+      visitOccurrenceReason = srcEncounter.getClass_().getDisplay();
+    }
     var newVisitOccurrence =
         createNewVisitOccurrence(
             srcEncounter,
@@ -172,7 +178,7 @@ public class EncounterInstitutionContactMapper implements FhirMapper<Encounter> 
             encounterSourceIdentifier,
             personId,
             institutionContactOnset,
-            encounterId);
+            encounterId, visitOccurrenceReason);
 
     if (newVisitOccurrence == null){
       return null;
@@ -324,7 +330,8 @@ public class EncounterInstitutionContactMapper implements FhirMapper<Encounter> 
       String encounterSourceIdentifier,
       Long personId,
       ResourceOnset institutionContactOnset,
-      String encounterId) {
+      String encounterId,
+      String visitOccurrenceReason) {
     var startDateTime = institutionContactOnset.getStartDateTime();
     var endDateTime = institutionContactOnset.getEndDateTime();
     var visitTypeConceptId = getVisitTypeConceptId(srcEncounter, endDateTime);
@@ -346,7 +353,7 @@ public class EncounterInstitutionContactMapper implements FhirMapper<Encounter> 
             .fhirIdentifier(encounterSourceIdentifier)
             .visitEndDatetime(visitEndDateTime)
             .visitEndDate(visitEndDateTime.toLocalDate())
-            .visitSourceValue(visitSourceValue == null ? null : visitSourceValue.substring(4))
+            .visitSourceValue(visitSourceValue == null ? visitOccurrenceReason : visitSourceValue.substring(4))
                 .careSiteId(Math.toIntExact(careSiteId))
             .build();
     if (bulkload.equals(Boolean.FALSE)) {
