@@ -454,6 +454,7 @@ public class TaskConfiguration {
   public Flow fullLoadFlow(
       Step stepProcessPatients,
       Step stepProcessOrganization,
+      Step stepProcessPractitioners,
       Step stepProcessEncounterInstitutionContact,
       Step stepProcessConditions,
       Step stepProcessObservations,
@@ -465,6 +466,7 @@ public class TaskConfiguration {
       Flow medicationStepsFlow) {
     return new FlowBuilder<SimpleFlow>("bulkload")
         .start(stepProcessOrganization)
+            .next(stepProcessPractitioners)
             .next(stepProcessPatients)
         .next(stepProcessEncounterInstitutionContact)
             .next(stepEncounterDepartmentCase)
