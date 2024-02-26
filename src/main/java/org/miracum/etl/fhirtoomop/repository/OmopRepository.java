@@ -21,6 +21,7 @@ public class OmopRepository {
   @Autowired private ConditionOccRepository conditionOccRepository;
   @Autowired private MeasurementRepository measurementRepository;
   @Autowired private ObservationRepository observationRepository;
+  @Autowired private ProviderRepository providerRepository;
   @Autowired private ProcedureOccRepository procedureOccRepository;
   @Autowired private SourceToConceptRepository sourceToConceptRepository;
   @Autowired private IcdSnomedRepository icdSnomedRepository;
@@ -37,5 +38,5 @@ public class OmopRepository {
   @Autowired private OrphaSnomedMappingRepository orphaSnomedMappingRepository;
   @Autowired private OpsStandardRepository opsStandardRepository;
   @Autowired private AtcStandardRepository atcStandardRepository;
-  @Autowired private LoincStandardRepository loincStandardRepository;
+  @Autowired private StandardRepository standardRepository;
 }

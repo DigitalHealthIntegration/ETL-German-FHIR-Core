@@ -34,6 +34,7 @@ import org.hl7.fhir.r4.model.DateType;
 import org.hl7.fhir.r4.model.Enumerations.ResourceType;
 import org.hl7.fhir.r4.model.Extension;
 import org.hl7.fhir.r4.model.Patient;
+import org.hl7.fhir.r4.model.StringType;
 import org.miracum.etl.fhirtoomop.DbMappings;
 import org.miracum.etl.fhirtoomop.config.FhirSystems;
 import org.miracum.etl.fhirtoomop.mapper.helpers.FindOmopConcepts;
@@ -73,6 +74,12 @@ public class PatientMapper implements FhirMapper<Patient> {
       MapperMetrics.setNoFhirReferenceCounter("stepProcessPatients");
   private static final Counter deletedFhirReferenceCounter =
       MapperMetrics.setDeletedFhirRessourceCounter("stepProcessPatients");
+  private static final Counter noBirthDateFoundCounter =
+          MapperMetrics.setNoBirthDateFoundCounter("stepProcessPatients");
+  private static final Counter invalidStringLengthCounter =
+          MapperMetrics.setInvalidStringLengthCounter("stepProcessPatients");
+  private static final Counter invalidBirthDateCounter =
+          MapperMetrics.setInvalidBirthDateCounter("stepProcessPatients");
 
   /**
    * Constructor for objects of the class PatientMapper.
@@ -123,6 +130,7 @@ public class PatientMapper implements FhirMapper<Patient> {
 
     if (realBirthDate == null && calculatedBirthDate == null) {
       log.info("No [Birthdate] found for [Patient]: {}. Skip Resource.", patientId);
+      noBirthDateFoundCounter.increment();
       if (bulkload.equals(Boolean.FALSE)) {
         deleteExistingPatients(patientLogicId, patientSourceIdentifier);
       }
@@ -147,6 +155,9 @@ public class PatientMapper implements FhirMapper<Patient> {
     var ethnicGroupCoding = extractEthnicGroup(srcPatient);
     setRaceConcept(ethnicGroupCoding, newPerson, patientLogicId);
     setEthnicityConcept(ethnicGroupCoding, newPerson);
+
+    extractTribe(srcPatient, newPerson);
+    extractOccupation(srcPatient, newPerson);
 
     var death = setDeath(srcPatient, patientLogicId, patientSourceIdentifier);
     if (death != null) {
@@ -278,6 +289,22 @@ public class PatientMapper implements FhirMapper<Patient> {
         person.setRaceSourceValue(ethnicGroupCode);
       }
     }
+  }
+
+  private void setTribe(Coding tribeCoding, Person person) {
+    if (tribeCoding == null || Strings.isNullOrEmpty(tribeCoding.getCode())) {
+      return;
+    }
+    var tribeCode = tribeCoding.getCode();
+    person.setTribeSourceValue(tribeCode);
+  }
+
+  private void setOccupation(Coding occupationCoding, Person person) {
+    if (occupationCoding == null || Strings.isNullOrEmpty(occupationCoding.getCode())) {
+      return;
+    }
+    var occupationCode = occupationCoding.getCode();
+    person.setOccupationSourceValue(occupationCode);
   }
 
   /**
@@ -442,6 +469,7 @@ public class PatientMapper implements FhirMapper<Patient> {
           "The String: {} is longer than allowed. Cut it to a length of {}.",
           stringToBeCut,
           maxLength);
+      invalidStringLengthCounter.increment();
       return StringUtils.left(stringToBeCut, maxLength);
     }
     return stringToBeCut;
@@ -519,6 +547,7 @@ public class PatientMapper implements FhirMapper<Patient> {
         return documentationDateTime.minusDays(age);
       default:
         log.warn("Unable to calculate [Birthdate] for [Patient]: {}.", patientId);
+        invalidBirthDateCounter.increment();
         return null;
     }
   }
@@ -596,6 +625,40 @@ public class PatientMapper implements FhirMapper<Patient> {
       return null;
     }
     return ethnicGroupExtension.getValue().castToCoding(ethnicGroupExtension.getValue());
+  }
+
+  private void extractTribe(Patient srcPatient, Person person) {
+    var tribeExtension = srcPatient.getExtensionByUrl(fhirSystems.getTribeExtension());
+    if (tribeExtension == null || !tribeExtension.hasValue()) {
+      return;
+    }
+    if(tribeExtension.getValue() instanceof Coding) {
+      Coding tribeCoding = tribeExtension.getValue().castToCoding(tribeExtension.getValue());
+      if (tribeCoding == null || Strings.isNullOrEmpty(tribeCoding.getCode())) {
+        return;
+      }
+      var tribeCode = tribeCoding.getCode();
+      person.setTribeSourceValue(tribeCode);
+    } else if (tribeExtension.getValue() instanceof StringType) {
+        person.setTribeSourceValue(((StringType) tribeExtension.getValue()).asStringValue());
+    }
+  }
+
+  private void extractOccupation(Patient srcPatient, Person person) {
+    var occupationExtension = srcPatient.getExtensionByUrl(fhirSystems.getOccupationExtension());
+    if (occupationExtension == null) {
+      return;
+    }
+    if(occupationExtension.getValue() instanceof Coding) {
+      Coding occupationCoding = occupationExtension.getValue().castToCoding(occupationExtension.getValue());
+      if (occupationCoding == null || Strings.isNullOrEmpty(occupationCoding.getCode())) {
+        return;
+      }
+      var tribeCode = occupationCoding.getCode();
+      person.setOccupationSourceValue(tribeCode);
+    } else if (occupationExtension.getValue() instanceof StringType) {
+      person.setOccupationSourceValue(((StringType) occupationExtension.getValue()).asStringValue());
+    }
   }
 
   /**

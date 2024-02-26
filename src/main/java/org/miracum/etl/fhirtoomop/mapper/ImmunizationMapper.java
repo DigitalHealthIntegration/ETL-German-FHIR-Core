@@ -8,6 +8,7 @@ import static org.miracum.etl.fhirtoomop.Constants.OMOP_DOMAIN_OBSERVATION;
 import static org.miracum.etl.fhirtoomop.Constants.VOCABULARY_ATC;
 import static org.miracum.etl.fhirtoomop.Constants.VOCABULARY_IPRD;
 import static org.miracum.etl.fhirtoomop.Constants.VOCABULARY_SNOMED;
+import static org.miracum.etl.fhirtoomop.Constants.VOCABULARY_WHO;
 
 import com.google.common.base.Strings;
 import io.micrometer.core.instrument.Counter;
@@ -50,7 +51,7 @@ public class ImmunizationMapper implements FhirMapper<Immunization> {
   private final DbMappings dbMappings;
   private final Boolean bulkload;
   private final List<String> listOfImmunizationVocabularyId =
-      Arrays.asList(VOCABULARY_ATC, VOCABULARY_SNOMED, VOCABULARY_IPRD);
+      Arrays.asList(VOCABULARY_ATC, VOCABULARY_SNOMED, VOCABULARY_IPRD, VOCABULARY_WHO);
 
   @Autowired OmopConceptServiceImpl omopConceptService;
   @Autowired ResourceFhirReferenceUtils fhirReferenceUtils;
@@ -72,6 +73,10 @@ public class ImmunizationMapper implements FhirMapper<Immunization> {
       MapperMetrics.setNoFhirReferenceCounter("stepProcessImmunizations");
   private static final Counter deletedFhirReferenceCounter =
       MapperMetrics.setDeletedFhirRessourceCounter("stepProcessImmunizations");
+  private static final Counter statusNotAcceptableCounter =
+          MapperMetrics.setStatusNotAcceptableCounter("stepProcessImmunizations");
+  private static final Counter noMatchingEncounterCounter =
+          MapperMetrics.setNoMatchingEncounterCount("stepProcessImmunizations");
 
   @Autowired
   public ImmunizationMapper(DbMappings dbMappings, Boolean bulkload) {
@@ -84,10 +89,6 @@ public class ImmunizationMapper implements FhirMapper<Immunization> {
     var wrapper = new OmopModelWrapper();
 
     var immunizationLogicId = fhirReferenceUtils.extractId(srcImmunization);
-//    var result = Objects.equals(immunizationLogicId, "imm-02769f55-7a3b-49f5-8d96-2c2e07394c13");
-//    if(!result){
-//      return null;
-//    }
     var immunizationSourceIdentifier =
         fhirReferenceUtils.extractResourceFirstIdentifier(srcImmunization);
     if (Strings.isNullOrEmpty(immunizationLogicId)
@@ -118,6 +119,7 @@ public class ImmunizationMapper implements FhirMapper<Immunization> {
           "The [status]: {} of {} is not acceptable for writing into OMOP CDM. Skip resource.",
           status,
           immunizationId);
+      statusNotAcceptableCounter.increment();
       return null;
     }
 
@@ -285,6 +287,26 @@ public class ImmunizationMapper implements FhirMapper<Immunization> {
           visitOccId,
           immunizationId);
     }else if (immunizationVocabularyId.equals(VOCABULARY_IPRD)) {
+      // for SNOMED codes
+
+      var snomedCodingList = getSnomedCodingList(vaccineCoding);
+      var snomedStandardConcepts =
+              getSnomedConceptList(
+                      snomedCodingList, immunizationOnset, immunizationLogicId, immunizationId);
+
+      immunizationProcessor(
+              null,
+              snomedStandardConcepts,
+              wrapper,
+              dose,
+              route,
+              immunizationOnset,
+              immunizationLogicId,
+              immunizationSourceIdentifier,
+              personId,
+              visitOccId,
+              immunizationId);
+    }else if (immunizationVocabularyId.equals(VOCABULARY_WHO)) {
       // for SNOMED codes
 
       var snomedCodingList = getSnomedCodingList(vaccineCoding);
@@ -768,6 +790,7 @@ public class ImmunizationMapper implements FhirMapper<Immunization> {
             encounterReferenceIdentifier, encounterReferenceLogicalId, personId, immunizationId);
     if (visitOccId == null) {
       log.debug("No matching [Encounter] found for [Immunization]: {}.", immunizationId);
+      noMatchingEncounterCounter.increment();
     }
 
     return visitOccId;

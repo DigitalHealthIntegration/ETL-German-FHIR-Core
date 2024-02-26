@@ -73,6 +73,7 @@ public class OmopWriter implements ItemWriter<OmopModelWrapper> {
     writeMedicationIdMap(entries);
     writePostProcessMap(entries);
     writePerson(entries);
+    writeOrganization(entries);
     writeVisitDetail(entries);
     writeVisitOcc(entries);
     writeObservation(entries);
@@ -81,6 +82,7 @@ public class OmopWriter implements ItemWriter<OmopModelWrapper> {
     writeDrugExposure(entries);
     writeMeasurement(entries);
     writeDeviceExposure(entries);
+    writeProvider(entries);
     writeSpecimen(entries);
 
     return Optional.empty();
@@ -148,6 +150,19 @@ public class OmopWriter implements ItemWriter<OmopModelWrapper> {
     }
   }
 
+  private void writeOrganization(List<? extends OmopModelWrapper> entries) {
+    var organization =
+            entries.stream()
+                    .filter(entry -> entry.getCareSite() != null)
+                    .map(OmopModelWrapper::getCareSite)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+    if(!organization.isEmpty()){
+      log.info("Inserting {} rows into care_site table",organization.size());
+      repository.getCareSiteRepository().saveAll(organization);
+    }
+  }
+
   /**
    * Writes the data from FHIR resources to the visit_detail table in OMOP CDM.
    *
@@ -195,6 +210,7 @@ public class OmopWriter implements ItemWriter<OmopModelWrapper> {
    * @param entries list of elements to be written to OMOP CDM
    */
   private void writeObservation(List<? extends OmopModelWrapper> entries) {
+    log.info("write------------{}",entries.size());
     var observations =
         entries.stream()
             .filter(entry -> entry.getObservation() != null)
@@ -207,6 +223,26 @@ public class OmopWriter implements ItemWriter<OmopModelWrapper> {
       log.info("Inserting {} rows into observation table", observations.size());
 
       repository.getObservationRepository().saveAll(observations);
+    }
+  }
+
+  /**
+   * Writes the data from FHIR resources to the observation table in OMOP CDM.
+   *
+   * @param entries list of elements to be written to OMOP CDM
+   */
+  private void writeProvider(List<? extends OmopModelWrapper> entries) {
+    var providers =
+            entries.stream()
+                    .filter(entry -> entry.getProvider() != null)
+                    .map(OmopModelWrapper::getProvider)
+                    .flatMap(List::stream)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+
+    if (!providers.isEmpty()) {
+      log.info("Inserting {} rows into observation table", providers.size());
+      repository.getProviderRepository().saveAll(providers);
     }
   }
 

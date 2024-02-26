@@ -43,6 +43,8 @@ public class FhirSystems {
   private static List<String> diagnoseCode;
   private static String ageExtension;
   private static String ethnicGroupExtension;
+  private static String tribeExtension;
+  private static String occupationExtension;
   private static String procedureDicom;
   private static String diagnosisUse;
   private static List<String> vaccineCode;
@@ -56,8 +58,12 @@ public class FhirSystems {
   private static String geccoFrailtyScore;
   private static List<String> diagnosticReportCategory;
   private static List<String> identifierSystem;
+  private static List<String> iprdSystem;
+  private static List<String> whoSystem;
 
   public enum fhirEnum {
+    IPRDSYSTEM(iprdSystem),
+    WHOSYSTEM(whoSystem),
     LOINC(loinc),
     ADMISSIONREASON(admissionReason),
     DISCHARGEREASON(dischargeReason),
@@ -79,6 +85,8 @@ public class FhirSystems {
     DIAGNOSECODE(diagnoseCode),
     AGEEXTENSION(ageExtension),
     ETHNICGROUPEXTENSION(ethnicGroupExtension),
+    TRIBEEXTENSION(tribeExtension),
+    OCCUPATIONEXTENSION(occupationExtension),
     PROCEDUREDICOM(procedureDicom),
     MEDICATIONROUTE(medicationRoute),
     DIAGNOSISUSE(diagnosisUse),
@@ -131,6 +139,21 @@ public class FhirSystems {
     }
   }
 
+  public void setIprdSystem(List<String> iprdSystem) {
+    FhirSystems.iprdSystem = iprdSystem;
+  }
+
+  public List<String> getIprdSystem() {
+    return iprdSystem;
+  }
+
+  public void setWhoSystem(List<String> whoSystem) {
+    FhirSystems.whoSystem = whoSystem;
+  }
+
+  public List<String> getWhoSystem() {
+    return whoSystem;
+  }
   public String getLoinc() {
     return loinc;
   }
@@ -345,6 +368,22 @@ public class FhirSystems {
 
   public void setEthnicGroupExtension(String ethnicGroupExtension) {
     FhirSystems.ethnicGroupExtension = ethnicGroupExtension;
+  }
+
+  public String getTribeExtension() {
+    return tribeExtension;
+  }
+
+  public void setTribeExtension(String tribeExtension) {
+    FhirSystems.tribeExtension = tribeExtension;
+  }
+
+  public String getOccupationExtension() {
+    return occupationExtension;
+  }
+
+  public void setOccupationExtension(String occupationExtension) {
+    FhirSystems.occupationExtension = occupationExtension;
   }
 
   public String getProcedureDicom() {
