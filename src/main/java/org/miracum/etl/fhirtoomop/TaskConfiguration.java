@@ -429,7 +429,8 @@ public class TaskConfiguration {
       Step stepProcessConsent,
       Step stepProcessDiagnosticReport,
       Flow medicationStepsFlow,
-      Step stepProcessPractitionerRole) {
+      Step stepProcessPractitionerRole,
+      Step stepProcessQuestionnaireResponse) {
     return new FlowBuilder<SimpleFlow>("bulkload")
         .start(stepProcessOrganization)
             .next(stepProcessPractitionerRole)
@@ -769,7 +770,7 @@ public class TaskConfiguration {
             client,
             fhirParser,
             ResourceType.PRACTITIONERROLE.getDisplay(),
-            STEP_ENCOUNTER_INSTITUTION_KONTAKT);
+            "");
   }
 
   /**
@@ -1626,5 +1627,49 @@ public class TaskConfiguration {
   @Bean
   public Step postProcessStep(@Qualifier("writerDataSource") final DataSource dataSource) {
     return stepBuilderFactory.get("stepPostProcess").tasklet(postProsessTask(dataSource)).build();
+  }
+
+  @Bean
+  @StepScope
+  public ItemStreamReader<FhirPsqlResource> readerPsqlQuestionnaireResponse(
+          @Qualifier("readerDataSource") final DataSource dataSource,
+          IGenericClient client,
+          IParser fhirParser) {
+    var resourceType = ResourceType.QUESTIONNAIRERESPONSE.name();
+    log.info(FETCH_RESOURCES_LOG, resourceType);
+    if (StringUtils.isBlank(fhirBaseUrl)) {
+      return createResourceReader(resourceType, dataSource);
+    }
+    return fhirServerItemReader(
+            client,
+            fhirParser,
+            ResourceType.QUESTIONNAIRERESPONSE.getDisplay(),
+            "");
+  }
+
+  @Bean
+  public QuestionnaireResponseProcessor questionnaireResponseProcessor(IParser parser, QuestionnaireResponseMapper questionnaireResponseMapper){
+    return new QuestionnaireResponseProcessor(questionnaireResponseMapper,parser);
+  }
+
+  @Bean
+  public Step stepProcessQuestionnaireResponse(
+          QuestionnaireResponseProcessor questionnaireResponseProcessor,
+          QuestionnaireResponseStepListener questionnaireResponseStepListener,
+          ItemStreamReader<FhirPsqlResource> readerPsqlQuestionnaireResponse,
+          ItemWriter<OmopModelWrapper> writer) {
+    var stepProcessQuestionnaireResponseBuilder =
+            stepBuilderFactory
+                    .get("stepProcessQuestionnaireResponse")
+                    .listener(questionnaireResponseStepListener)
+                    .<FhirPsqlResource, OmopModelWrapper>chunk(batchChunkSize)
+                    .reader(readerPsqlQuestionnaireResponse)
+                    .processor(questionnaireResponseProcessor)
+                    .listener(new FhirResourceProcessListener())
+                    .writer(writer);
+    if(StringUtils.isBlank(fhirBaseUrl)){
+      stepProcessQuestionnaireResponseBuilder.throttleLimit(throttleLimit).taskExecutor(taskExecutor());
+    }
+    return stepProcessQuestionnaireResponseBuilder.build();
   }
 }
