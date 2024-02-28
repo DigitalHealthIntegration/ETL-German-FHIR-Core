@@ -435,6 +435,7 @@ public class TaskConfiguration {
         .start(stepProcessOrganization)
             .next(stepProcessPractitionerRole)
             .next(stepProcessPractitioners)
+            .next(stepProcessQuestionnaireResponse)
             .next(stepProcessPatients)
         .next(stepProcessEncounterInstitutionContact)
             .next(stepEncounterDepartmentCase)
