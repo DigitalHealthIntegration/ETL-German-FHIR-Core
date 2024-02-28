@@ -6,6 +6,7 @@ import io.micrometer.core.instrument.Counter;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.r4.model.Enumerations;
 import org.hl7.fhir.r4.model.QuestionnaireResponse;
+import org.hl7.fhir.r4.model.ResourceType;
 import org.miracum.etl.fhirtoomop.DbMappings;
 import org.miracum.etl.fhirtoomop.config.FhirSystems;
 import org.miracum.etl.fhirtoomop.mapper.helpers.MapperMetrics;
@@ -52,6 +53,7 @@ public class QuestionnaireResponseMapper implements FhirMapper<QuestionnaireResp
             return null;
         }
         var encounterId = srcQuestionnaireResponse.getEncounter().getReferenceElement().getIdPart();
+        var encounterLogicalId = fhirReferenceUtils.extractId(ResourceType.Encounter.name(),encounterId);
         var tagOfQuestionnaireResponse = srcQuestionnaireResponse.getMeta().getTag().stream().findFirst();
         if(tagOfQuestionnaireResponse.isEmpty()){
             return null;
@@ -59,14 +61,19 @@ public class QuestionnaireResponseMapper implements FhirMapper<QuestionnaireResp
         var questionnaireResponseTagCode = tagOfQuestionnaireResponse.get().getCode();
         var mappedQuestionnaire = "";
         try{
-            mappedQuestionnaire  = srcQuestionnaireResponse.getQuestionnaire().split("/")[1];
+            mappedQuestionnaire  = srcQuestionnaireResponse.getQuestionnaire();
+            if(mappedQuestionnaire == null){
+                mappedQuestionnaire = "";
+            } else {
+                mappedQuestionnaire = mappedQuestionnaire.split("/")[1];
+            }
         }catch(IndexOutOfBoundsException e){
             log.warn(e.getLocalizedMessage());
             mappedQuestionnaire = "";
         }
         var combinedTagCodeAndQuestionnaire = questionnaireResponseTagCode.concat(",").concat(mappedQuestionnaire);
         var addQuestionnaireResponseToPostProcess = postProcessMapForQuestionnaireResponse(
-                questionnaireResponseLogicalId,combinedTagCodeAndQuestionnaire,encounterId);
+                questionnaireResponseLogicalId,combinedTagCodeAndQuestionnaire,encounterLogicalId);
         wrapper.getPostProcessMap().add(addQuestionnaireResponseToPostProcess);
         return wrapper;
     }
@@ -74,11 +81,11 @@ public class QuestionnaireResponseMapper implements FhirMapper<QuestionnaireResp
     private PostProcessMap postProcessMapForQuestionnaireResponse(
             String questionnaireResponseLogicalId,
             String combinedTagCodeAndQuestionnaire,
-            String encounterId) {
+            String encounterLogicalId) {
         return PostProcessMap.builder()
                 .dataOne(combinedTagCodeAndQuestionnaire)
-                .dataTwo(encounterId)
-                .type(Enumerations.ResourceType.PRACTITIONERROLE.name())
+                .dataTwo(encounterLogicalId)
+                .type(Enumerations.ResourceType.QUESTIONNAIRERESPONSE.name())
                 .fhirLogicalId(questionnaireResponseLogicalId)
                 .build();
     }
