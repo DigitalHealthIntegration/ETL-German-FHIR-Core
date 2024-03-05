@@ -433,7 +433,8 @@ public class TaskConfiguration {
       Step stepProcessDiagnosticReport,
       Flow medicationStepsFlow,
       Step stepProcessPractitionerRole,
-      Step stepProcessQuestionnaireResponse) {
+      Step stepProcessQuestionnaireResponse,
+      Step stepProcessProvenance) {
     return new FlowBuilder<SimpleFlow>("bulkload")
         .start(stepProcessOrganization)
             .next(stepProcessPractitionerRole)
@@ -449,6 +450,7 @@ public class TaskConfiguration {
         .next(stepProcessImmunization)
         .next(stepProcessConsent)
         .next(stepProcessDiagnosticReport)
+            .next(stepProcessProvenance)
         .build();
   }
 
@@ -1653,8 +1655,32 @@ public class TaskConfiguration {
   }
 
   @Bean
+  @StepScope
+  public ItemStreamReader<FhirPsqlResource> readerPsqlProvenance(
+          @Qualifier("readerDataSource") final DataSource dataSource,
+          IGenericClient client,
+          IParser fhirParser
+  ){
+    var resourceType = ResourceType.PROVENANCE.name();
+    log.info(FETCH_RESOURCES_LOG, resourceType);
+    if (StringUtils.isBlank(fhirBaseUrl)){
+      return createResourceReader(resourceType, dataSource);
+    }
+    return fhirServerItemReader(
+            client,
+            fhirParser,
+            ResourceType.PROVENANCE.getDisplay(),
+            "");
+  }
+
+  @Bean
   public QuestionnaireResponseProcessor questionnaireResponseProcessor(IParser parser, QuestionnaireResponseMapper questionnaireResponseMapper){
     return new QuestionnaireResponseProcessor(questionnaireResponseMapper,parser);
+  }
+
+  @Bean
+  public ProvenanceProcessor provenanceProcessor(IParser parser, ProvenanceMapper provenanceMapper){
+    return new ProvenanceProcessor(provenanceMapper, parser);
   }
 
   @Bean
@@ -1676,5 +1702,26 @@ public class TaskConfiguration {
       stepProcessQuestionnaireResponseBuilder.throttleLimit(throttleLimit).taskExecutor(taskExecutor());
     }
     return stepProcessQuestionnaireResponseBuilder.build();
+  }
+
+  @Bean
+  public Step stepProcessProvenance(
+          ProvenanceProcessor provenanceProcessor,
+          ProvenanceStepListener provenanceStepListener,
+          ItemStreamReader<FhirPsqlResource> readerPsqlProvenance,
+          ItemWriter<OmopModelWrapper> writer){
+    var stepProcessProvenanceBuilder =
+            stepBuilderFactory
+                    .get("stepProcessProvenance")
+                    .listener(provenanceStepListener)
+                    .<FhirPsqlResource, OmopModelWrapper>chunk(batchChunkSize)
+                    .reader(readerPsqlProvenance)
+                    .processor(provenanceProcessor)
+                    .listener(new FhirResourceProcessListener())
+                    .writer(writer);
+    if (StringUtils.isBlank(fhirBaseUrl)){
+      stepProcessProvenanceBuilder.throttleLimit(throttleLimit).taskExecutor(taskExecutor());
+    }
+    return stepProcessProvenanceBuilder.build();
   }
 }
