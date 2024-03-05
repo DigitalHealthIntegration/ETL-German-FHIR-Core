@@ -11,6 +11,7 @@ import org.miracum.etl.fhirtoomop.DbMappings;
 import org.miracum.etl.fhirtoomop.config.FhirSystems;
 import org.miracum.etl.fhirtoomop.mapper.helpers.MapperMetrics;
 import org.miracum.etl.fhirtoomop.mapper.helpers.ResourceFhirReferenceUtils;
+import org.miracum.etl.fhirtoomop.mapper.helpers.ResourceOmopReferenceUtils;
 import org.miracum.etl.fhirtoomop.model.OmopModelWrapper;
 import org.miracum.etl.fhirtoomop.model.PostProcessMap;
 import org.miracum.etl.fhirtoomop.processor.QuestionnaireResponseProcessor;
@@ -32,6 +33,8 @@ public class QuestionnaireResponseMapper implements FhirMapper<QuestionnaireResp
 
     @Autowired
     ResourceFhirReferenceUtils fhirReferenceUtils;
+    @Autowired
+    ResourceOmopReferenceUtils omopReferenceUtils;
 
     private static final Counter noFhirReferenceCounter = MapperMetrics.setNoFhirReferenceCounter("stepProcessPractitionerRoles");
 

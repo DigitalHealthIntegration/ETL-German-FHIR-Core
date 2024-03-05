@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 @Getter
 @Component("repositories")
 public class OmopRepository {
+  @Autowired private AppointmentRepository appointmentRepository;
   @Autowired private ConceptRepository conceptRepository;
   @Autowired private VisitDetailRepository visitDetailRepository;
   @Autowired private CareSiteRepository careSiteRepository;

@@ -70,6 +70,7 @@ public class OmopWriter implements ItemWriter<OmopModelWrapper> {
    */
   private Optional<Void> writeOmopChunk(List<? extends OmopModelWrapper> entries) {
 
+    writeAppointment(entries);
     writeMedicationIdMap(entries);
     writePostProcessMap(entries);
     writePerson(entries);
@@ -160,6 +161,19 @@ public class OmopWriter implements ItemWriter<OmopModelWrapper> {
     if(!organization.isEmpty()){
       log.info("Inserting {} rows into care_site table",organization.size());
       repository.getCareSiteRepository().saveAll(organization);
+    }
+  }
+
+  private void writeAppointment(List<? extends OmopModelWrapper> entries){
+    var appointment =
+            entries.stream()
+                    .filter(entry -> entry.getAppointment() != null)
+                    .map(OmopModelWrapper::getAppointment)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+    if (!appointment.isEmpty()){
+      log.info("Inserting {} rows into appointment table", appointment.size());
+      repository.getAppointmentRepository().saveAll(appointment);
     }
   }
 

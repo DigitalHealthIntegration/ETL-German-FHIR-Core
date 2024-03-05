@@ -434,7 +434,8 @@ public class TaskConfiguration {
       Flow medicationStepsFlow,
       Step stepProcessPractitionerRole,
       Step stepProcessQuestionnaireResponse,
-      Step stepProcessProvenance) {
+      Step stepProcessProvenance,
+      Step stepProcessAppointments) {
     return new FlowBuilder<SimpleFlow>("bulkload")
         .start(stepProcessOrganization)
             .next(stepProcessPractitionerRole)
@@ -451,6 +452,7 @@ public class TaskConfiguration {
         .next(stepProcessConsent)
         .next(stepProcessDiagnosticReport)
             .next(stepProcessProvenance)
+            .next(stepProcessAppointments)
         .build();
   }
 
@@ -664,6 +666,21 @@ public class TaskConfiguration {
     return fhirServerItemReader(client, fhirParser, ResourceType.PRACTITIONER.getDisplay(), "");
   }
 
+  @Bean
+  @StepScope
+  public ItemStreamReader<FhirPsqlResource> readerPsqlAppointment(
+          @Qualifier("readerDataSource") final DataSource dataSource,
+          IGenericClient client,
+          IParser fhirParser) {
+
+    var resourceType = "Appointment";
+    log.info(FETCH_RESOURCES_LOG, resourceType);
+    if (StringUtils.isBlank(fhirBaseUrl)) {
+      return createResourceReader(resourceType, dataSource);
+    }
+    return fhirServerItemReader(client, fhirParser, ResourceType.APPOINTMENT.getDisplay(), "");
+  }
+
   /**
    * Create FHIR Server REST API paging reader.
    *
@@ -778,6 +795,36 @@ public class TaskConfiguration {
             fhirParser,
             ResourceType.PRACTITIONERROLE.getDisplay(),
             "");
+  }
+
+  @Bean
+  public Step stepProcessAppointments(
+          AppointmentProcessor appointmentProcessor,
+          AppointmentStepListener listener,
+          ItemStreamReader<FhirPsqlResource> readerPsqlAppointment,
+          ItemWriter<OmopModelWrapper> writer
+  ) {
+
+    var stepProcessAppointmentBuilder =
+            stepBuilderFactory
+                    .get("stepProcessAppointment")
+                    .listener(listener)
+                    .<FhirPsqlResource, OmopModelWrapper>chunk(batchChunkSize)
+                    .reader(readerPsqlAppointment)
+                    .processor(appointmentProcessor)
+                    .listener(new FhirResourceProcessListener())
+                    .writer(writer);
+    if (StringUtils.isBlank(fhirBaseUrl)) {
+
+      stepProcessAppointmentBuilder.throttleLimit(throttleLimit).taskExecutor(taskExecutor());
+    }
+    return stepProcessAppointmentBuilder.build();
+  }
+
+  @Bean
+  public AppointmentProcessor appointmentProcessor(IParser parser, AppointmentMapper appointmentMapper) {
+
+    return new AppointmentProcessor(appointmentMapper, parser);
   }
 
   /**
