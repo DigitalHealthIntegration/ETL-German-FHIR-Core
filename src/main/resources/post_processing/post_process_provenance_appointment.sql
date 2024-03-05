@@ -14,5 +14,5 @@ care_site_id = app_prov_details.care_site_id
 		)
 		select vo.visit_occurrence_id , vo.person_id, vo.care_site_id, appointment_logical_id  from qr_details qd, provenance_details pd, cds_cdm.visit_occurrence vo, cds_cdm.appointment app
 		where pd.questionnaire_response_logical_id=qd.fhir_logical_id and qd.data_two = vo.fhir_logical_id
-	) as app_prov_details;
+	) as app_prov_details
 where app.fhir_logical_id = app_prov_details.appointment_logical_id;
