@@ -1,3 +1,7 @@
+DO
+$$
+DECLARE v_rowCount int;
+BEGIN
 update cds_cdm.appointment as app
 set visit_occurrence_id = app_prov_details.visit_occurrence_id,
 person_id = app_prov_details.person_id,
@@ -16,3 +20,7 @@ care_site_id = app_prov_details.care_site_id
 		where pd.questionnaire_response_logical_id=qd.fhir_logical_id and qd.data_two = vo.fhir_logical_id
 	) as app_prov_details
 where app.fhir_logical_id = app_prov_details.appointment_logical_id;
+GET DIAGNOSTICS v_rowCount = ROW_COUNT;
+RAISE NOTICE 'Updated % rows in appointment.',v_rowCount;
+END;
+$$;
