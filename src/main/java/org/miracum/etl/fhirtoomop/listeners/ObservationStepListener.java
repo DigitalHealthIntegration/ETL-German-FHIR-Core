@@ -111,6 +111,7 @@ public class ObservationStepListener implements StepExecutionListener {
             repositories.getVisitOccRepository().getFhirLogicalIdAndVisitOccId());
         dbMappings.setFindVisitOccIdByIdentifier(
             repositories.getVisitOccRepository().getFhirIdentifierAndVisitOccId());
+
       }
       dbMappings.setFindLoincStandardMapping(
           repositories.getStandardRepository().getStandardMap());

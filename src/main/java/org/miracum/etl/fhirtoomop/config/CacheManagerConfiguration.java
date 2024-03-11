@@ -40,7 +40,8 @@ public class CacheManagerConfiguration {
             "ops-standard",
             "orpha-snomed",
             "atc-standard",
-            "loinc-standard"));
+            "loinc-standard",
+               "valid-conceptRelations"));
     cacheManager.setCaffeine(caffeineCacheBuilder());
     return cacheManager;
   }

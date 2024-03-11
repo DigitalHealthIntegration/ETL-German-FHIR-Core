@@ -55,6 +55,7 @@ import org.hl7.fhir.r4.model.StringType;
 import org.hl7.fhir.r4.model.Type;
 import org.miracum.etl.fhirtoomop.DbMappings;
 import org.miracum.etl.fhirtoomop.config.FhirSystems;
+import org.miracum.etl.fhirtoomop.mapper.helpers.FindOmopConceptRelationship;
 import org.miracum.etl.fhirtoomop.mapper.helpers.FindOmopConcepts;
 import org.miracum.etl.fhirtoomop.mapper.helpers.MapperMetrics;
 import org.miracum.etl.fhirtoomop.mapper.helpers.ResourceCheckDataAbsentReason;
@@ -71,7 +72,9 @@ import org.miracum.etl.fhirtoomop.model.omop.Measurement;
 import org.miracum.etl.fhirtoomop.model.omop.OmopObservation;
 import org.miracum.etl.fhirtoomop.model.omop.ProcedureOccurrence;
 import org.miracum.etl.fhirtoomop.model.omop.SourceToConceptMap;
+import org.miracum.etl.fhirtoomop.repository.service.EncounterDepartmentCaseMapperServiceImpl;
 import org.miracum.etl.fhirtoomop.repository.service.ObservationMapperServiceImpl;
+import org.miracum.etl.fhirtoomop.repository.service.OmopConceptRelationshipServiceImpl;
 import org.miracum.etl.fhirtoomop.repository.service.OmopConceptServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.Nullable;
@@ -94,11 +97,19 @@ public class ObservationMapper implements FhirMapper<Observation> {
   private final DbMappings dbMappings;
 
   @Autowired OmopConceptServiceImpl omopConceptService;
+  @Autowired
+  OmopConceptRelationshipServiceImpl omopConceptRelationshipService;
   @Autowired ResourceOmopReferenceUtils omopReferenceUtils;
   @Autowired ObservationMapperServiceImpl observationService;
   @Autowired ResourceFhirReferenceUtils fhirReferenceUtils;
   @Autowired ResourceCheckDataAbsentReason checkDataAbsentReason;
   @Autowired FindOmopConcepts findOmopConcepts;
+
+  @Autowired
+  FindOmopConceptRelationship findOmopConceptRelationship;
+
+  @Autowired
+  EncounterDepartmentCaseMapperServiceImpl departmentCaseMapperService;
 
   private static final Counter noStartDateCounter =
       MapperMetrics.setNoStartDateCounter("stepProcessObservations");
@@ -165,10 +176,11 @@ public class ObservationMapper implements FhirMapper<Observation> {
     var wrapper = new OmopModelWrapper();
 
     var observationLogicId = fhirReferenceUtils.extractId(srcObservation);
-//    var result = Objects.equals(observationLogicId, "obs-4283158f-7e61-436e-bb3d-67558e677cb5");
+//    var result = Objects.equals(observationLogicId, "obs-4243918b-f05c-411b-8474-2abc998944a5");
 //    if(!result){
 //      return null;
 //    }
+//    omopConceptRelationshipService.findValidConceptRelationshipFromConceptId(60000005);
     var observationSourceIdentifier =
         fhirReferenceUtils.extractResourceFirstIdentifier(srcObservation);
     if (StringUtils.isBlank(observationLogicId)
@@ -331,7 +343,12 @@ public class ObservationMapper implements FhirMapper<Observation> {
       }
       return resourceOnset;
     }
-
+    var fhirLogicalId = fhirReferenceUtils.extractId(org.hl7.fhir.r4.model.ResourceType.Encounter.name(), srcObservation.getEncounter().getReferenceElement().getIdPart());
+    var visitDetail = departmentCaseMapperService.getVisitStartDateTimeByFhirLogicId(fhirLogicalId);
+    if(visitDetail != null){
+      resourceOnset.setStartDateTime(visitDetail.getVisitDetailStartDatetime());
+      resourceOnset.setEndDateTime(visitDetail.getVisitDetailEndDatetime());
+    }
     return resourceOnset;
   }
 
@@ -651,16 +668,22 @@ public class ObservationMapper implements FhirMapper<Observation> {
             && observationVocabularyId.equals(VOCABULARY_IPRD)){
       // for IPRD
 
-      loincStandardMapPairList =
-              getValidCodes(observationCoding, effectiveDateTime.toLocalDate(), observationId);
-
-      if (loincStandardMapPairList.isEmpty()) {
+      var getConcept = findOmopConcepts.getConcepts(
+              observationCoding,null,bulkload,dbMappings,observationId
+      );
+      if(getConcept == null){
+        log.warn("no concept found");
         return;
       }
-      for (var singlePair : loincStandardMapPairList) {
+      var getConceptRelation =
+              findOmopConceptRelationship.getConceptRelationShip(getConcept.getConceptId());
+//              omopConceptRelationshipService.findValidConceptRelationshipFromConceptId(getConcept.getConceptId());
+
+      if(getConceptRelation != null){
+        var getActualConcept = findOmopConcepts.getConcepts(getConceptRelation.getConceptId2(),bulkload,dbMappings,observationId);
         observationProcessor(
-                singlePair,
                 null,
+                getActualConcept,
                 srcObservation,
                 personId,
                 visitOccId,
@@ -669,22 +692,50 @@ public class ObservationMapper implements FhirMapper<Observation> {
                 observationSourceIdentifier,
                 wrapper,
                 observationId);
+      } else {
+        loincStandardMapPairList =
+                getValidCodes(observationCoding, effectiveDateTime.toLocalDate(), observationId);
+
+        if (loincStandardMapPairList.isEmpty()) {
+          return;
+        }
+        for (var singlePair : loincStandardMapPairList) {
+          observationProcessor(
+                  singlePair,
+                  null,
+                  srcObservation,
+                  personId,
+                  visitOccId,
+                  effectiveDateTime,
+                  observationLogicId,
+                  observationSourceIdentifier,
+                  wrapper,
+                  observationId);
+        }
       }
+
+
     }
     else if(observationVocabularyId != null
             && observationVocabularyId.equals(VOCABULARY_WHO)){
       // for WHO
 
-      loincStandardMapPairList =
-              getValidCodes(observationCoding, effectiveDateTime.toLocalDate(), observationId);
-
-      if (loincStandardMapPairList.isEmpty()) {
+      var getConcept = findOmopConcepts.getConcepts(
+              observationCoding,null,bulkload,dbMappings,observationId
+      );
+      if(getConcept == null){
+        log.warn("no concept found");
         return;
       }
-      for (var singlePair : loincStandardMapPairList) {
+      var getConceptRelation =
+              findOmopConceptRelationship.getConceptRelationShip(getConcept.getConceptId());
+//              omopConceptRelationshipService.findValidConceptRelationshipFromConceptId(getConcept.getConceptId());
+
+      if(getConceptRelation != null){
+        var getActualConcept = findOmopConcepts.getConcepts(getConceptRelation.getConceptId2(),bulkload,dbMappings,observationId);
         observationProcessor(
-                singlePair,
                 null,
+                getActualConcept,
                 srcObservation,
                 personId,
                 visitOccId,
@@ -694,9 +745,31 @@ public class ObservationMapper implements FhirMapper<Observation> {
                 wrapper,
                 observationId);
       }
+      else{
+        loincStandardMapPairList =
+                getValidCodes(observationCoding, effectiveDateTime.toLocalDate(), observationId);
+
+        if (loincStandardMapPairList.isEmpty()) {
+          return;
+        }
+        for (var singlePair : loincStandardMapPairList) {
+          observationProcessor(
+                  singlePair,
+                  null,
+                  srcObservation,
+                  personId,
+                  visitOccId,
+                  effectiveDateTime,
+                  observationLogicId,
+                  observationSourceIdentifier,
+                  wrapper,
+                  observationId);
+        }
+      }
+
     }else if(observationVocabularyId != null
             && observationVocabularyId.equals(VOCABULARY_ICD10GM)){
-      // for IPRD
+      // for ICD10
       ArrayList<Coding> codings = new ArrayList<>();
       codings.add(observationCoding);
       var loincIcdMapPairList =

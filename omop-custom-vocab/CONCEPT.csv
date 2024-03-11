@@ -34,9 +34,9 @@ concept_id	concept_name	domain_id	vocabulary_id	concept_class_id	standard_concep
 60000204	Protien ++	Observation	WHO	Survey	s	ANC.B9.DE147	20120608	20991231	
 60000205	Protien +++	Observation	WHO	Survey	s	ANC.B9.DE148	20120608	20991231	
 60000206	Protien ++++	Observation	WHO	Survey	s	ANC.B9.DE149	20120608	20991231	
-60000207	Sugar ++	Observation	WHO	Survey	s	ANC.B9.DE153	20120608	20991231	
-60000208	Sugar +++	Observation	WHO	Survey	s	ANC.B9.DE154	20120608	20991231	
-60000209	Sugarn ++++	Observation	WHO	Survey	s	ANC.B9.DE155	20120608	20991231	
+60000207	Glucose ++	Observation	WHO	Survey	s	ANC.B9.DE153	20120608	20991231	
+60000208	Glucose +++	Observation	WHO	Survey	s	ANC.B9.DE154	20120608	20991231	
+60000209	Glucose ++++	Observation	WHO	Survey	s	ANC.B9.DE155	20120608	20991231	
 60000210	Type of client - Un-bokked	Observation	IPRD	Survey	s	IPRD.DE41	20120608	20991231	
 60000211	Transportation In Others (includes bicycles,animal carriers, monocycles)	Observation	IPRD	Survey	s	IPRD.DE49	20120608	20991231	
 60000212	Cord clamped/cut 5 seconds after birth (i.e. immediately after birth)	Observation	IPRD	Survey	s	IPRD.DE70	20120608	20991231	
@@ -248,15 +248,15 @@ concept_id	concept_name	domain_id	vocabulary_id	concept_class_id	standard_concep
 80000012	Hepatitis C positive	Observation	WHO	Survey	s	ANC.B9.DE75	20120608	20991231	
 80000013	Hepatitis B negative	Observation	WHO	Survey	s	ANC.B9.DE73	20120608	20991231	
 80000014	Syphilis negative	Observation	WHO	Survey	s	ANC.B9.DE109	20120608	20991231	
-80000015	+	Observation	WHO	Survey	s	ANC.B9.DE152	20120608	20991231	
-80000016	0	Observation	WHO	Survey	s	ANC.B9.DE145	20120608	20991231	
+80000015	Glucose +	Observation	WHO	Survey	s	ANC.B9.DE152	20120608	20991231	
+80000016	Protein - 0	Observation	WHO	Survey	s	ANC.B9.DE145	20120608	20991231	
 80000017	Convulsions	Observation	WHO	Survey	s	ANC.B6.DE41	20120608	20991231	
 80000018	D - Dead	Observation	IPRD	Survey	s	IPRD.DE192	20120608	20991231	
 80000019	Birth weight <2.5kg and admitted on KMC	Observation	IPRD	Survey	s	IPRD.DE117	20120608	20991231	
 80000020	Syphilis positive	Observation	WHO	Survey	s	ANC.B9.DE108	20120608	20991231	
 80000021	A	Observation	WHO	Survey	s	ANC.B9.DE25	20120608	20991231	
 80000022	Hepatitis C negative	Observation	WHO	Survey	s	ANC.B9.DE76	20120608	20991231	
-80000023	0	Observation	WHO	Survey	s	ANC.B9.DE151	20120608	20991231	
+80000023	Glucose - 0	Observation	WHO	Survey	s	ANC.B9.DE151	20120608	20991231	
 80000024	Negative	Observation	WHO	Survey	s	ANC.B9.DE31	20120608	20991231	
 80000025	Hepatitis B positive	Observation	WHO	Survey	s	ANC.B9.DE72	20120608	20991231	
 80000026	Antepartum haemorrhage	Observation	WHO	Survey	s	ANC.End.28	20120608	20991231	
@@ -295,7 +295,7 @@ concept_id	concept_name	domain_id	vocabulary_id	concept_class_id	standard_concep
 80000062	Fever	Observation	WHO	Survey	s	ANC.B5.DE17	20120608	20991231	
 80000063	Bleeding PV	Observation	WHO	Survey	s	ANC.B5.DE41	20120608	20991231	
 80000064	Breathlessness	Observation	WHO	Survey	s	ANC.B7.DE22	20120608	20991231	
-80000065	+	Observation	WHO	Survey	s	ANC.B9.DE146	20120608	20991231	
+80000065	Urine Protein +	Observation	WHO	Survey	s	ANC.B9.DE146	20120608	20991231	
 80000066	Abnormal Biochemical Parameters	Observation	IPRD	Survey	s	IPRD.DE7	20120608	20991231	
 80000067	Swelling of legs	Observation	WHO	Survey	s	ANC.B8.DE99	20120608	20991231	
 80000068	Pre-eclampsia	Observation	WHO	Survey	s	ANC.End.34	20120608	20991231	
@@ -323,3 +323,13 @@ concept_id	concept_name	domain_id	vocabulary_id	concept_class_id	standard_concep
 90000004	Organization-Lga	Visit	IPRD	Organization		lga	20020131	20991231	
 90000005	Organization-Ward	Visit	IPRD	Organization		ward	20020131	20991231	
 90000006	Organization-facility	Visit	IPRD	Organization		facility	20020131	20991231	
+90000007	Has Alternative	Metadata	Relationship	Relationship		OMOP generated	19700101	20991231	
+90000008	Past medical history	Condition	IPRD	Survey	s	IPRD.DE11	20120608	20991231	
+90000009	Spontaneous Abortion	Observation	IPRD	Survey	s	IPRD.DE55	20120608	20991231	
+90000010	Health Condition Status	Observation	IPRD	Survey	s	IPRD.DE57	20120608	20991231	
+90000011	Admitted	Observation	IPRD	Survey	s	IPRD.DE58	20120608	20991231	
+90000012	Discharged	Observation	WHO	Survey	s	IPRD.DE59	20120608	20991231	
+90000013	Referred	Observation	WHO	Survey	s	IPRD.DE60	20120608	20991231	
+90000014	Hepatitis C positive	Observation	IPRD	Survey	s	IPRD.DE60	20120608	20991231	
+90000015	Hepatitis C negetive	Observation	IPRD	Survey	s	IPRD.DE60	20120608	20991231	
+

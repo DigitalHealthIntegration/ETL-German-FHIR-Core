@@ -988,4 +988,21 @@ public class FindOmopConcepts {
         .standardDomainId(omopConcept.getDomainId())
         .build();
   }
+
+  public Concept getConcepts(Integer conceptId,Boolean bulkLoad,
+                             DbMappings dbMappings,
+                             String fhirId){
+    if(conceptId == null){
+      return null;
+    }
+    List<Concept> allConcepts = null;
+    if(bulkLoad.equals(Boolean.TRUE)){
+      allConcepts = omopConceptService.findAllConceptByConceptId(conceptId);
+    }
+
+    if(allConcepts == null){
+      return null;
+    }
+    return allConcepts.get(0);
+  }
 }

@@ -15,6 +15,7 @@ import org.miracum.etl.fhirtoomop.model.PostProcessMap;
 import org.miracum.etl.fhirtoomop.model.SnomedRaceStandardLookup;
 import org.miracum.etl.fhirtoomop.model.SnomedVaccineStandardLookup;
 import org.miracum.etl.fhirtoomop.model.omop.CareSite;
+import org.miracum.etl.fhirtoomop.model.omop.ConceptRelationship;
 import org.miracum.etl.fhirtoomop.model.omop.ConditionOccurrence;
 import org.miracum.etl.fhirtoomop.model.omop.Measurement;
 import org.miracum.etl.fhirtoomop.model.omop.OmopObservation;
@@ -69,4 +70,5 @@ public class DbMappings {
   private Map<Long, List<OmopObservation>> findOmopObservation;
   private Map<Long, List<Measurement>> findMeasurement;
   private Map<String, List<MedicationIdMap>> findMedication;
+  private Map<Integer, List<ConceptRelationship>> findConceptRelationship;
 }

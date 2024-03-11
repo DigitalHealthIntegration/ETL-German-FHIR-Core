@@ -142,4 +142,8 @@ public class OmopConceptServiceImpl {
   public MedicationIdMap saveAndFlush(MedicationIdMap medicationIdMap) {
     return medicationIdRepository.saveAndFlush(medicationIdMap);
   }
+
+  public  List<Concept> findAllConceptByConceptId(Integer conceptId){
+    return conceptRepository.findAllConceptByConceptId(conceptId);
+  }
 }

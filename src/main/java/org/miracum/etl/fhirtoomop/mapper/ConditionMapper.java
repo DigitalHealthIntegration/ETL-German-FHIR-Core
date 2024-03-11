@@ -34,6 +34,7 @@ import org.hl7.fhir.r4.model.Enumerations.ResourceType;
 import org.hl7.fhir.r4.model.StringType;
 import org.miracum.etl.fhirtoomop.DbMappings;
 import org.miracum.etl.fhirtoomop.config.FhirSystems;
+import org.miracum.etl.fhirtoomop.mapper.helpers.FindOmopConceptRelationship;
 import org.miracum.etl.fhirtoomop.mapper.helpers.FindOmopConcepts;
 import org.miracum.etl.fhirtoomop.mapper.helpers.MapperMetrics;
 import org.miracum.etl.fhirtoomop.mapper.helpers.ResourceCheckDataAbsentReason;
@@ -52,6 +53,7 @@ import org.miracum.etl.fhirtoomop.model.omop.ProcedureOccurrence;
 import org.miracum.etl.fhirtoomop.model.omop.SourceToConceptMap;
 import org.miracum.etl.fhirtoomop.model.omop.Specimen;
 import org.miracum.etl.fhirtoomop.repository.service.ConditionMapperServiceImpl;
+import org.miracum.etl.fhirtoomop.repository.service.EncounterDepartmentCaseMapperServiceImpl;
 import org.miracum.etl.fhirtoomop.repository.service.OmopConceptServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.Nullable;
@@ -78,6 +80,12 @@ public class ConditionMapper implements FhirMapper<Condition> {
   @Autowired ConditionMapperServiceImpl conditionService;
   @Autowired ResourceCheckDataAbsentReason checkDataAbsentReason;
   @Autowired FindOmopConcepts findOmopConcepts;
+
+  @Autowired
+  FindOmopConceptRelationship findOmopConceptRelationship;
+
+  @Autowired
+  EncounterDepartmentCaseMapperServiceImpl departmentCaseMapperService;
 
   private static final Counter noStartDateCounter =
       MapperMetrics.setNoStartDateCounter("stepProcessConditions");
@@ -128,6 +136,10 @@ public class ConditionMapper implements FhirMapper<Condition> {
     var wrapper = new OmopModelWrapper();
 
     var conditionLogicId = fhirReferenceUtils.extractId(srcCondition);
+//    var result = Objects.equals(conditionLogicId, "con-3ac764cc-abfe-4b70-8272-1ec535f30e81");
+//    if(!result){
+//      return null;
+//    }
     var conditionSourceIdentifier = fhirReferenceUtils.extractResourceFirstIdentifier(srcCondition);
     if (Strings.isNullOrEmpty(conditionLogicId)
         && Strings.isNullOrEmpty(conditionSourceIdentifier)) {
@@ -458,20 +470,38 @@ public class ConditionMapper implements FhirMapper<Condition> {
                       conditionId);
 
       if (snomedConcept == null) {
+        log.warn("No Concept found");
         return;
       }
-
-      icdProcessor(
-              null,
-              snomedConcept,
-              null,
-              wrapper,
-              diagnoseOnset,
-              diagnosticConfidenceConcept,
-              conditionLogicId,
-              conditionSourceIdentifier,
-              personId,
-              visitOccId);
+      var getConceptRelation =
+              findOmopConceptRelationship.getConceptRelationShip(snomedConcept.getConceptId());
+      if(getConceptRelation != null){
+        var getActualConcept = findOmopConcepts.getConcepts(getConceptRelation.getConceptId2(),bulkload,dbMappings,conditionId);
+        icdProcessor(
+                null,
+                getActualConcept,
+                null,
+                wrapper,
+                diagnoseOnset,
+                diagnosticConfidenceConcept,
+                conditionLogicId,
+                conditionSourceIdentifier,
+                personId,
+                visitOccId);
+      }
+      else{
+        icdProcessor(
+                null,
+                snomedConcept,
+                null,
+                wrapper,
+                diagnoseOnset,
+                diagnosticConfidenceConcept,
+                conditionLogicId,
+                conditionSourceIdentifier,
+                personId,
+                visitOccId);
+      }
     }
 
     setBodySiteLocalization(
@@ -806,6 +836,12 @@ public class ConditionMapper implements FhirMapper<Condition> {
         resourceOnset.setStartDateTime(recordedDate);
         return resourceOnset;
       }
+    }
+    var fhirLogicalId = fhirReferenceUtils.extractId(org.hl7.fhir.r4.model.ResourceType.Encounter.name(), srcCondition.getEncounter().getReferenceElement().getIdPart());
+    var visitDetail = departmentCaseMapperService.getVisitStartDateTimeByFhirLogicId(fhirLogicalId);
+    if(visitDetail != null){
+      resourceOnset.setStartDateTime(visitDetail.getVisitDetailStartDatetime());
+      resourceOnset.setEndDateTime(visitDetail.getVisitDetailEndDatetime());
     }
     return resourceOnset;
   }
