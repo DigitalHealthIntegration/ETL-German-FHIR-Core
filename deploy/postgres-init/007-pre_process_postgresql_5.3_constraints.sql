@@ -14,7 +14,7 @@ ALTER TABLE cds_cdm.visit_occurrence ADD CONSTRAINT fpk_visit_occurrence_person_
 ALTER TABLE cds_cdm.visit_occurrence ADD CONSTRAINT fpk_visit_occurrence_visit_concept_id FOREIGN KEY (visit_concept_id) REFERENCES cds_cdm.CONCEPT (CONCEPT_ID);
 ALTER TABLE cds_cdm.visit_occurrence ADD CONSTRAINT fpk_visit_occurrence_visit_type_concept_id FOREIGN KEY (visit_type_concept_id) REFERENCES cds_cdm.CONCEPT (CONCEPT_ID);
 ALTER TABLE cds_cdm.visit_occurrence ADD CONSTRAINT fpk_visit_occurrence_provider_id FOREIGN KEY (provider_id) REFERENCES cds_cdm.PROVIDER (PROVIDER_ID);
-ALTER TABLE cds_cdm.visit_occurrence ADD CONSTRAINT fpk_visit_occurrence_care_site_id FOREIGN KEY (care_site_id) REFERENCES cds_cdm.CARE_SITE (CARE_SITE_ID);
+ALTER TABLE cds_cdm.visit_occurrence ADD CONSTRAINT fpk_visit_occurrence_care_site_id FOREIGN KEY (care_site_id) REFERENCES cds_cdm.CARE_SITE (CARE_SITE_ID) ON DELETE CASCADE;
 ALTER TABLE cds_cdm.visit_occurrence ADD CONSTRAINT fpk_visit_occurrence_visit_source_concept_id FOREIGN KEY (visit_source_concept_id) REFERENCES cds_cdm.CONCEPT (CONCEPT_ID);
 ALTER TABLE cds_cdm.visit_occurrence ADD CONSTRAINT fpk_visit_occurrence_admitting_source_concept_id FOREIGN KEY (admitting_source_concept_id) REFERENCES cds_cdm.CONCEPT (CONCEPT_ID);
 ALTER TABLE cds_cdm.visit_occurrence ADD CONSTRAINT fpk_visit_occurrence_discharge_to_concept_id FOREIGN KEY (discharge_to_concept_id) REFERENCES cds_cdm.CONCEPT (CONCEPT_ID);
@@ -29,13 +29,13 @@ ALTER TABLE cds_cdm.visit_detail ADD CONSTRAINT fpk_visit_detail_admitting_sourc
 ALTER TABLE cds_cdm.visit_detail ADD CONSTRAINT fpk_visit_detail_discharge_to_concept_id FOREIGN KEY (discharge_to_concept_id) REFERENCES cds_cdm.CONCEPT (CONCEPT_ID);
 ALTER TABLE cds_cdm.visit_detail ADD CONSTRAINT fpk_visit_detail_preceding_visit_detail_id FOREIGN KEY (preceding_visit_detail_id) REFERENCES cds_cdm.VISIT_DETAIL (VISIT_DETAIL_ID);
 ALTER TABLE cds_cdm.visit_detail ADD CONSTRAINT fpk_visit_detail_visit_detail_parent_id FOREIGN KEY (visit_detail_parent_id) REFERENCES cds_cdm.VISIT_DETAIL (VISIT_DETAIL_ID);
-ALTER TABLE cds_cdm.visit_detail ADD CONSTRAINT fpk_visit_detail_visit_occurrence_id FOREIGN KEY (visit_occurrence_id) REFERENCES cds_cdm.VISIT_OCCURRENCE (VISIT_OCCURRENCE_ID);
+ALTER TABLE cds_cdm.visit_detail ADD CONSTRAINT fpk_visit_detail_visit_occurrence_id FOREIGN KEY (visit_occurrence_id) REFERENCES cds_cdm.VISIT_OCCURRENCE (VISIT_OCCURRENCE_ID) ON DELETE CASCADE;
 ALTER TABLE cds_cdm.condition_occurrence ADD CONSTRAINT fpk_condition_occurrence_person_id FOREIGN KEY (person_id) REFERENCES cds_cdm.PERSON (PERSON_ID);
 ALTER TABLE cds_cdm.condition_occurrence ADD CONSTRAINT fpk_condition_occurrence_condition_concept_id FOREIGN KEY (condition_concept_id) REFERENCES cds_cdm.CONCEPT (CONCEPT_ID);
 ALTER TABLE cds_cdm.condition_occurrence ADD CONSTRAINT fpk_condition_occurrence_condition_type_concept_id FOREIGN KEY (condition_type_concept_id) REFERENCES cds_cdm.CONCEPT (CONCEPT_ID);
 ALTER TABLE cds_cdm.condition_occurrence ADD CONSTRAINT fpk_condition_occurrence_condition_status_concept_id FOREIGN KEY (condition_status_concept_id) REFERENCES cds_cdm.CONCEPT (CONCEPT_ID);
 ALTER TABLE cds_cdm.condition_occurrence ADD CONSTRAINT fpk_condition_occurrence_provider_id FOREIGN KEY (provider_id) REFERENCES cds_cdm.PROVIDER (PROVIDER_ID);
-ALTER TABLE cds_cdm.condition_occurrence ADD CONSTRAINT fpk_condition_occurrence_visit_occurrence_id FOREIGN KEY (visit_occurrence_id) REFERENCES cds_cdm.VISIT_OCCURRENCE (VISIT_OCCURRENCE_ID);
+ALTER TABLE cds_cdm.condition_occurrence ADD CONSTRAINT fpk_condition_occurrence_visit_occurrence_id FOREIGN KEY (visit_occurrence_id) REFERENCES cds_cdm.VISIT_OCCURRENCE (VISIT_OCCURRENCE_ID) ON DELETE CASCADE;
 ALTER TABLE cds_cdm.condition_occurrence ADD CONSTRAINT fpk_condition_occurrence_visit_detail_id FOREIGN KEY (visit_detail_id) REFERENCES cds_cdm.VISIT_DETAIL (VISIT_DETAIL_ID);
 ALTER TABLE cds_cdm.condition_occurrence ADD CONSTRAINT fpk_condition_occurrence_condition_source_concept_id FOREIGN KEY (condition_source_concept_id) REFERENCES cds_cdm.CONCEPT (CONCEPT_ID);
 ALTER TABLE cds_cdm.drug_exposure ADD CONSTRAINT fpk_drug_exposure_person_id FOREIGN KEY (person_id) REFERENCES cds_cdm.PERSON (PERSON_ID);
@@ -43,7 +43,7 @@ ALTER TABLE cds_cdm.drug_exposure ADD CONSTRAINT fpk_drug_exposure_drug_concept_
 ALTER TABLE cds_cdm.drug_exposure ADD CONSTRAINT fpk_drug_exposure_drug_type_concept_id FOREIGN KEY (drug_type_concept_id) REFERENCES cds_cdm.CONCEPT (CONCEPT_ID);
 ALTER TABLE cds_cdm.drug_exposure ADD CONSTRAINT fpk_drug_exposure_route_concept_id FOREIGN KEY (route_concept_id) REFERENCES cds_cdm.CONCEPT (CONCEPT_ID);
 ALTER TABLE cds_cdm.drug_exposure ADD CONSTRAINT fpk_drug_exposure_provider_id FOREIGN KEY (provider_id) REFERENCES cds_cdm.PROVIDER (PROVIDER_ID);
-ALTER TABLE cds_cdm.drug_exposure ADD CONSTRAINT fpk_drug_exposure_visit_occurrence_id FOREIGN KEY (visit_occurrence_id) REFERENCES cds_cdm.VISIT_OCCURRENCE (VISIT_OCCURRENCE_ID);
+ALTER TABLE cds_cdm.drug_exposure ADD CONSTRAINT fpk_drug_exposure_visit_occurrence_id FOREIGN KEY (visit_occurrence_id) REFERENCES cds_cdm.VISIT_OCCURRENCE (VISIT_OCCURRENCE_ID) ON DELETE CASCADE;
 ALTER TABLE cds_cdm.drug_exposure ADD CONSTRAINT fpk_drug_exposure_visit_detail_id FOREIGN KEY (visit_detail_id) REFERENCES cds_cdm.VISIT_DETAIL (VISIT_DETAIL_ID);
 ALTER TABLE cds_cdm.drug_exposure ADD CONSTRAINT fpk_drug_exposure_drug_source_concept_id FOREIGN KEY (drug_source_concept_id) REFERENCES cds_cdm.CONCEPT (CONCEPT_ID);
 ALTER TABLE cds_cdm.procedure_occurrence ADD CONSTRAINT fpk_procedure_occurrence_person_id FOREIGN KEY (person_id) REFERENCES cds_cdm.PERSON (PERSON_ID);
@@ -64,7 +64,7 @@ ALTER TABLE cds_cdm.measurement ADD CONSTRAINT fpk_measurement_operator_concept_
 ALTER TABLE cds_cdm.measurement ADD CONSTRAINT fpk_measurement_value_as_concept_id FOREIGN KEY (value_as_concept_id) REFERENCES cds_cdm.CONCEPT (CONCEPT_ID);
 ALTER TABLE cds_cdm.measurement ADD CONSTRAINT fpk_measurement_unit_concept_id FOREIGN KEY (unit_concept_id) REFERENCES cds_cdm.CONCEPT (CONCEPT_ID);
 ALTER TABLE cds_cdm.measurement ADD CONSTRAINT fpk_measurement_provider_id FOREIGN KEY (provider_id) REFERENCES cds_cdm.PROVIDER (PROVIDER_ID);
-ALTER TABLE cds_cdm.measurement ADD CONSTRAINT fpk_measurement_visit_occurrence_id FOREIGN KEY (visit_occurrence_id) REFERENCES cds_cdm.VISIT_OCCURRENCE (VISIT_OCCURRENCE_ID);
+ALTER TABLE cds_cdm.measurement ADD CONSTRAINT fpk_measurement_visit_occurrence_id FOREIGN KEY (visit_occurrence_id) REFERENCES cds_cdm.VISIT_OCCURRENCE (VISIT_OCCURRENCE_ID) ON DELETE CASCADE;
 ALTER TABLE cds_cdm.measurement ADD CONSTRAINT fpk_measurement_visit_detail_id FOREIGN KEY (visit_detail_id) REFERENCES cds_cdm.VISIT_DETAIL (VISIT_DETAIL_ID);
 ALTER TABLE cds_cdm.measurement ADD CONSTRAINT fpk_measurement_measurement_source_concept_id FOREIGN KEY (measurement_source_concept_id) REFERENCES cds_cdm.CONCEPT (CONCEPT_ID);
 ALTER TABLE cds_cdm.observation ADD CONSTRAINT fpk_observation_person_id FOREIGN KEY (person_id) REFERENCES cds_cdm.PERSON (PERSON_ID);
@@ -74,7 +74,7 @@ ALTER TABLE cds_cdm.observation ADD CONSTRAINT fpk_observation_value_as_concept_
 ALTER TABLE cds_cdm.observation ADD CONSTRAINT fpk_observation_qualifier_concept_id FOREIGN KEY (qualifier_concept_id) REFERENCES cds_cdm.CONCEPT (CONCEPT_ID);
 ALTER TABLE cds_cdm.observation ADD CONSTRAINT fpk_observation_unit_concept_id FOREIGN KEY (unit_concept_id) REFERENCES cds_cdm.CONCEPT (CONCEPT_ID);
 ALTER TABLE cds_cdm.observation ADD CONSTRAINT fpk_observation_provider_id FOREIGN KEY (provider_id) REFERENCES cds_cdm.PROVIDER (PROVIDER_ID);
-ALTER TABLE cds_cdm.observation ADD CONSTRAINT fpk_observation_visit_occurrence_id FOREIGN KEY (visit_occurrence_id) REFERENCES cds_cdm.VISIT_OCCURRENCE (VISIT_OCCURRENCE_ID);
+ALTER TABLE cds_cdm.observation ADD CONSTRAINT fpk_observation_visit_occurrence_id FOREIGN KEY (visit_occurrence_id) REFERENCES cds_cdm.VISIT_OCCURRENCE (VISIT_OCCURRENCE_ID) ON DELETE CASCADE;
 ALTER TABLE cds_cdm.observation ADD CONSTRAINT fpk_observation_visit_detail_id FOREIGN KEY (visit_detail_id) REFERENCES cds_cdm.VISIT_DETAIL (VISIT_DETAIL_ID);
 ALTER TABLE cds_cdm.observation ADD CONSTRAINT fpk_observation_observation_source_concept_id FOREIGN KEY (observation_source_concept_id) REFERENCES cds_cdm.CONCEPT (CONCEPT_ID);
 ALTER TABLE cds_cdm.death ADD CONSTRAINT fpk_death_person_id FOREIGN KEY (person_id) REFERENCES cds_cdm.PERSON (PERSON_ID);
@@ -104,7 +104,7 @@ ALTER TABLE cds_cdm.fact_relationship ADD CONSTRAINT fpk_fact_relationship_relat
 ALTER TABLE cds_cdm.care_site ADD CONSTRAINT fpk_care_site_place_of_service_concept_id FOREIGN KEY (place_of_service_concept_id) REFERENCES cds_cdm.CONCEPT (CONCEPT_ID);
 ALTER TABLE cds_cdm.care_site ADD CONSTRAINT fpk_care_site_location_id FOREIGN KEY (location_id) REFERENCES cds_cdm.LOCATION (LOCATION_ID);
 ALTER TABLE cds_cdm.provider ADD CONSTRAINT fpk_provider_specialty_concept_id FOREIGN KEY (specialty_concept_id) REFERENCES cds_cdm.CONCEPT (CONCEPT_ID);
-ALTER TABLE cds_cdm.provider ADD CONSTRAINT fpk_provider_care_site_id FOREIGN KEY (care_site_id) REFERENCES cds_cdm.CARE_SITE (CARE_SITE_ID);
+ALTER TABLE cds_cdm.provider ADD CONSTRAINT fpk_provider_care_site_id FOREIGN KEY (care_site_id) REFERENCES cds_cdm.CARE_SITE (CARE_SITE_ID) ON DELETE CASCADE;
 ALTER TABLE cds_cdm.provider ADD CONSTRAINT fpk_provider_gender_concept_id FOREIGN KEY (gender_concept_id) REFERENCES cds_cdm.CONCEPT (CONCEPT_ID);
 ALTER TABLE cds_cdm.provider ADD CONSTRAINT fpk_provider_specialty_source_concept_id FOREIGN KEY (specialty_source_concept_id) REFERENCES cds_cdm.CONCEPT (CONCEPT_ID);
 ALTER TABLE cds_cdm.provider ADD CONSTRAINT fpk_provider_gender_source_concept_id FOREIGN KEY (gender_source_concept_id) REFERENCES cds_cdm.CONCEPT (CONCEPT_ID);

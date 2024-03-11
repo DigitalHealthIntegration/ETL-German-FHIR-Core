@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * The VisitDetailRepository interface represents a repository for the visit_detail table in OMOP
@@ -44,4 +45,9 @@ public interface VisitDetailRepository
    * @param fhirIdentifier identifier of the FHIR resource
    */
   void deleteByFhirIdentifier(String fhirIdentifier);
+
+  @Transactional
+  @Modifying
+  @Query(value = "DELETE FROM visit_detail WHERE visit_detail_id NOT IN (select min(visit_detail_id) from cds_cdm.visit_detail where fhir_logical_id = :fhir_logical_id group by visit_detail_id)", nativeQuery = true)
+  void deleteEntriesByFhirLogicalId(@Param("fhir_logical_id") String fhirLogicalId);
 }

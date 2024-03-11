@@ -20,7 +20,6 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.r4.model.Encounter;
 import org.hl7.fhir.r4.model.Encounter.EncounterLocationComponent;
@@ -35,6 +34,7 @@ import org.miracum.etl.fhirtoomop.mapper.helpers.ResourceOmopReferenceUtils;
 import org.miracum.etl.fhirtoomop.mapper.helpers.ResourceOnset;
 import org.miracum.etl.fhirtoomop.model.OmopModelWrapper;
 import org.miracum.etl.fhirtoomop.model.omop.VisitDetail;
+import org.miracum.etl.fhirtoomop.repository.OmopRepository;
 import org.miracum.etl.fhirtoomop.repository.service.EncounterDepartmentCaseMapperServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.Nullable;
@@ -56,6 +56,8 @@ public class EncounterDepartmentCaseMapper implements FhirMapper<Encounter> {
   private final IFhirPath fhirPath;
   private final Boolean bulkload;
   private final DbMappings dbMappings;
+
+  private final OmopRepository repositories;
 
   @Autowired ResourceFhirReferenceUtils fhirReferenceUtils;
   @Autowired ResourceOmopReferenceUtils omopReferenceUtils;
@@ -89,22 +91,24 @@ public class EncounterDepartmentCaseMapper implements FhirMapper<Encounter> {
    * Constructor for objects of the class EncounterDepartmentCaseMapper.
    *
    * @param referenceUtils utilities for the identification of FHIR resource references
-   * @param fhirPath FhirPath engine to evaluate path expressions over FHIR resources
-   * @param bulkload parameter which indicates whether the Job should be run as bulk load or
-   *     incremental load
-   * @param dbMappings collections for the intermediate storage of data from OMOP CDM in RAM
+   * @param fhirPath       FhirPath engine to evaluate path expressions over FHIR resources
+   * @param bulkload       parameter which indicates whether the Job should be run as bulk load or
+   *                       incremental load
+   * @param dbMappings     collections for the intermediate storage of data from OMOP CDM in RAM
+   * @param repositories
    */
   @Autowired
   public EncounterDepartmentCaseMapper(
-      ResourceFhirReferenceUtils referenceUtils,
-      IFhirPath fhirPath,
-      Boolean bulkload,
-      DbMappings dbMappings) {
+          ResourceFhirReferenceUtils referenceUtils,
+          IFhirPath fhirPath,
+          Boolean bulkload,
+          DbMappings dbMappings, OmopRepository repositories) {
     this.referenceUtils = referenceUtils;
     this.fhirPath = fhirPath;
 
     this.bulkload = bulkload;
     this.dbMappings = dbMappings;
+    this.repositories = repositories;
   }
 
   /**
@@ -725,7 +729,7 @@ public class EncounterDepartmentCaseMapper implements FhirMapper<Encounter> {
   private void deleteExistingVisitDetails(
       String departmentCaseLogicId, String departmentCaseLogicIdentifier) {
     if (!Strings.isNullOrEmpty(departmentCaseLogicId)) {
-      departmentCaseMapperService.deleteExistingDepartmentcaseByLogicalId(departmentCaseLogicId);
+      repositories.getVisitDetailRepository().deleteEntriesByFhirLogicalId(departmentCaseLogicId);
     } else {
       departmentCaseMapperService.deleteExistingDepartmentcaseByIdentifier(
           departmentCaseLogicIdentifier);

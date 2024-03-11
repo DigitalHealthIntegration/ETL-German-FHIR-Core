@@ -44,15 +44,6 @@ public class EncounterDepartmentCaseMapperServiceImpl {
   }
 
   /**
-   * Delete FHIR Encounter resources from OMOP CDM tables using fhir_logical_id
-   *
-   * @param fhirLogicalId logical id of the FHIR Encounter resource
-   */
-  public void deleteExistingDepartmentcaseByLogicalId(String fhirLogicalId) {
-    visitDetailRepository.deleteByFhirLogicalId(fhirLogicalId);
-  }
-
-  /**
    * Delete FHIR Encounter resources from OMOP CDM tables using fhir_identifier
    *
    * @param fhirIdentifier identifier of the FHIR Encounter resource

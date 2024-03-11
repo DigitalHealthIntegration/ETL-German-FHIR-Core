@@ -7,6 +7,7 @@ import org.miracum.etl.fhirtoomop.model.omop.CareSite;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -39,4 +40,9 @@ public interface CareSiteRepository extends PagingAndSortingRepository<CareSite,
   @Modifying
   @Query(value = "TRUNCATE TABLE care_site CASCADE", nativeQuery = true)
   void truncateTable();
+
+  @Transactional
+  @Modifying
+  @Query(value = "DELETE FROM care_Site WHERE fhir_logical_id = :fhir_logical_id", nativeQuery = true)
+  void deleteCareSiteByLogicalId(@Param("fhir_logical_id") String fhirLogicalId);
 }
