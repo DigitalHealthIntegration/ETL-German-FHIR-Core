@@ -290,7 +290,7 @@ public class ImmunizationMapper implements FhirMapper<Immunization> {
           visitOccId,
           immunizationId);
     }else if (immunizationVocabularyId.equals(VOCABULARY_IPRD)) {
-      // for SNOMED codes
+      // for IPRD codes
 
       var snomedCodingList = getSnomedCodingList(vaccineCoding);
       var snomedStandardConcepts =
@@ -310,7 +310,7 @@ public class ImmunizationMapper implements FhirMapper<Immunization> {
               visitOccId,
               immunizationId);
     }else if (immunizationVocabularyId.equals(VOCABULARY_WHO)) {
-      // for SNOMED codes
+      // for WHO codes
 
       var snomedCodingList = getSnomedCodingList(vaccineCoding);
       var snomedStandardConcepts =

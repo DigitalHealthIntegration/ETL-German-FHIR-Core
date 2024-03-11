@@ -160,6 +160,9 @@ public class ProcedureMapper implements FhirMapper<Procedure> {
 
     var statusElement = srcProcedure.getStatusElement();
     var statusValue = checkDataAbsentReason.getValue(statusElement);
+    if(statusValue == null){
+      statusValue = "completed";
+    }
     if (Strings.isNullOrEmpty(statusValue)
         || !FHIR_RESOURCE_ACCEPTABLE_EVENT_STATUS_LIST.contains(statusValue)) {
       log.error(
@@ -525,7 +528,7 @@ public class ProcedureMapper implements FhirMapper<Procedure> {
                try {
                  getActualConcept = findOmopConcepts.getConcepts(getConceptRelation.getConceptId2(),bulkload,dbMappings,procedureId);
                } catch (IndexOutOfBoundsException e){
-                 log.warn("{},{}",getConceptRelation.getConceptId1(),getConceptRelation.getConceptId2());
+//                 log.warn("{},{}",getConceptRelation.getConceptId1(),getConceptRelation.getConceptId2());
                }
         procedureProcessor(
                 null,
