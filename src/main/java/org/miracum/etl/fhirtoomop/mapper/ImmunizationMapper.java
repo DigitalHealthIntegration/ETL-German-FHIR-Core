@@ -767,6 +767,12 @@ public class ImmunizationMapper implements FhirMapper<Immunization> {
   private ResourceOnset getImmunizationOnset(Immunization srcImmunization) {
     var resourceOnset = new ResourceOnset();
     if (!srcImmunization.hasOccurrenceDateTimeType()) {
+      var fhirLogicalId = fhirReferenceUtils.extractId(ResourceType.Encounter.name(), srcImmunization.getEncounter().getReferenceElement().getIdPart());
+      var visitDetail = departmentCaseMapperService.getVisitStartDateTimeByFhirLogicId(fhirLogicalId);
+      if(visitDetail != null){
+        resourceOnset.setStartDateTime(visitDetail.getVisitDetailStartDatetime());
+        resourceOnset.setEndDateTime(visitDetail.getVisitDetailEndDatetime());
+      }
       return resourceOnset;
     }
 
@@ -779,12 +785,7 @@ public class ImmunizationMapper implements FhirMapper<Immunization> {
         resourceOnset.setEndDateTime(immunizationOccurrenceDateTime);
       }
     }
-    var fhirLogicalId = fhirReferenceUtils.extractId(ResourceType.Encounter.name(), srcImmunization.getEncounter().getReferenceElement().getIdPart());
-    var visitDetail = departmentCaseMapperService.getVisitStartDateTimeByFhirLogicId(fhirLogicalId);
-    if(visitDetail != null){
-      resourceOnset.setStartDateTime(visitDetail.getVisitDetailStartDatetime());
-      resourceOnset.setEndDateTime(visitDetail.getVisitDetailEndDatetime());
-    }
+
     return resourceOnset;
   }
 
