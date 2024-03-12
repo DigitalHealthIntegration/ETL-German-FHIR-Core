@@ -177,6 +177,7 @@ fhir:
       - "http://iprdsolutions.com/fhir/uv/anc/CodeSystem/iprd-custom-codes"
       - "https://iprdgroup.com/custom-codes"
       - "https://www.iprdgroup.com/ValueSet/OrganizationType/tags"
+      - "http://hl7.org/fhir/sid/icd-10"
     vaccine-code:
       - "http://fhir.de/CodeSystem/dimdi/atc"
       - "http://fhir.de/CodeSystem/bfarm/atc"
