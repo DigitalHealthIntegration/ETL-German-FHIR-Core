@@ -573,6 +573,8 @@ public class TaskConfiguration {
       Step stepProcessImmunization,
       Step stepProcessConsent,
       Step stepProcessDiagnosticReport,
+      Step stepProcessPractitioners,
+      Step stepProcessPractitionerRole,
       Flow medicationStepsFlow) {
     return new FlowBuilder<SimpleFlow>("incrementalLoad")
         .start(stepProcessPatients)
@@ -586,6 +588,8 @@ public class TaskConfiguration {
         .next(stepProcessImmunization)
         .next(stepProcessConsent)
         .next(stepProcessDiagnosticReport)
+            .next(stepProcessPractitioners)
+            .next(stepProcessPractitionerRole)
         .build();
   }
 

@@ -7,6 +7,7 @@ import org.miracum.etl.fhirtoomop.DbMappings;
 import org.miracum.etl.fhirtoomop.mapper.helpers.ResourceFhirReferenceUtils;
 import org.miracum.etl.fhirtoomop.model.OmopModelWrapper;
 import org.miracum.etl.fhirtoomop.model.omop.Provider;
+import org.miracum.etl.fhirtoomop.repository.OmopRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -27,18 +28,20 @@ public class PractitionerMapper implements FhirMapper<Practitioner> {
 
     private final Boolean bulkload;
     private final DbMappings dbMappings;
-
+    private final OmopRepository repositories;
     @Autowired
     ResourceFhirReferenceUtils fhirReferenceUtils;
     /**
      * Constructs a new {@code PractitionerMapper} with the specified bulkload flag and database mappings.
      *
-     * @param bulkload   Indicates whether the mapper operates in bulk load mode.
-     * @param dbMappings The database mappings used for mapping resources.
+     * @param bulkload     Indicates whether the mapper operates in bulk load mode.
+     * @param dbMappings   The database mappings used for mapping resources.
+     * @param repositories
      */
-    public PractitionerMapper(Boolean bulkload, DbMappings dbMappings) {
+    public PractitionerMapper(Boolean bulkload, DbMappings dbMappings, OmopRepository repositories) {
         this.bulkload = bulkload;
         this.dbMappings = dbMappings;
+        this.repositories = repositories;
     }
 
     /**
@@ -51,9 +54,16 @@ public class PractitionerMapper implements FhirMapper<Practitioner> {
     @Override
     public OmopModelWrapper map(Practitioner resource, boolean isDeleted) {
         var wrapper = new OmopModelWrapper();
-        Random rand = new Random();
+        Random random = new Random();
+        var practitionerId = fhirReferenceUtils.extractId(resource);
+        if (bulkload.equals(Boolean.FALSE)){
+            repositories.getProviderRepository().deleteProviderByLogicId(practitionerId);
+            if (isDeleted){
+                return null;
+            }
+        }
         String gender = String.valueOf(resource.getGenderElement().getValue());
-        Integer id = Math.abs(rand.nextInt());
+        Integer id = Math.abs(random.nextInt());
         List<StringType> givenNames = resource.getName().get(0).getGiven();
         List<String> givenNamesStrings = givenNames.stream()
                 .map(StringType::getValue)
@@ -69,7 +79,6 @@ public class PractitionerMapper implements FhirMapper<Practitioner> {
             localDate = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
             year = localDate.getYear();
         }
-        var practitionerId = fhirReferenceUtils.extractId(resource);
         Provider provider = setUpProvider(gender, id, fullName, year != 0 ? year : null, practitionerId);
         wrapper.getProvider().add(provider);
         return wrapper;

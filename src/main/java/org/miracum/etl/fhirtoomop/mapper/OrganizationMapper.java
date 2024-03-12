@@ -102,9 +102,7 @@ public class OrganizationMapper implements FhirMapper<Organization> {
                 .fhirLogicalId(organizationLogicId)
                 .fhirIdentifier(organizationIdentifier)
                 .build();
-        if (!dbMappings.getFindCareSiteId().containsKey(sourceValue)){
-            wrapper.setCareSite(newCareSite);
-        }
+        wrapper.setCareSite(newCareSite);
         return wrapper;
     }
 }
