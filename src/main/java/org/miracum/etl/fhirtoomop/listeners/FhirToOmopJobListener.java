@@ -424,6 +424,7 @@ public class FhirToOmopJobListener implements JobExecutionListener {
       counters.add(Metrics.counter("no.birth.date.found", "type", stepExecution.getStepName()));
       counters.add(Metrics.counter("invalid.string.length", "type", stepExecution.getStepName()));
       counters.add(Metrics.counter("invalid.birth.date", "type", stepExecution.getStepName()));
+      counters.add(Metrics.counter("target.not.found", "type", stepExecution.getStepName()));
     }
     return counters;
   }

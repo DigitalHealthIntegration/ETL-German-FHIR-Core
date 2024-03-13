@@ -276,4 +276,11 @@ public class MapperMetrics {
         .tag("deleted", stepName)
         .register(Metrics.globalRegistry);
   }
+
+  public static Counter setNoTargetReferenceFoundCounter(String stepName){
+    return Counter.builder("target.not.found")
+            .description("No Target Found in the resource")
+            .tag("type", stepName)
+            .register(Metrics.globalRegistry);
+  }
 }

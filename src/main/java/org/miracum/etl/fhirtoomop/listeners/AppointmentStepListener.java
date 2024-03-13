@@ -57,35 +57,8 @@ public class AppointmentStepListener implements StepExecutionListener {
                 stopWatch.start();
                 stopWatch.stop();
             }
-
-            if (dictionaryLoadInRam.equals(Boolean.TRUE)){
-                dbMappings.setFindPersonIdByLogicalId(
-                        repositories.getPersonRepository().getFhirLogicalIdAndPersonId());
-                dbMappings.setFindVisitOccIdByLogicalId(
-                        repositories.getVisitOccRepository().getFhirLogicalIdAndVisitOccId());
-                dbMappings.setFindIcdSnomedMapping(repositories.getIcdSnomedRepository().getIcdSnomedMap());
-                dbMappings.setFindOrphaSnomedMapping(
-                        repositories.getOrphaSnomedMappingRepository().getOrphaSnomedMap());
-                dbMappings
-                        .getOmopConceptMapWrapper()
-                        .setFindValidSnomedConcept(
-                                repositories.getConceptRepository().findValidConceptId(VOCABULARY_SNOMED));
-                dbMappings
-                        .getOmopConceptMapWrapper()
-                        .setFindValidIPRDConcept(
-                                repositories.getConceptRepository().findValidConceptId(VOCABULARY_IPRD));
-                dbMappings.getOmopConceptMapWrapper().setFindValidWHOConcept(
-                        repositories.getConceptRepository().findValidConceptId(VOCABULARY_WHO)
-                );
-                dbMappings
-                        .getOmopConceptMapWrapper()
-                        .setFindValidIcd10GmConcept(
-                                repositories.getConceptRepository().findValidConceptId(VOCABULARY_ICD10GM));
-            }
-            dbMappings.setFindHardCodeConcept(
-                    repositories.getSourceToConceptRepository().sourceToConceptMap());
-            }
         }
+    }
 
     @Override
     public ExitStatus afterStep(StepExecution stepExecution) {
