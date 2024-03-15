@@ -78,6 +78,7 @@ fhir:
       - "http://iprdsolutions.com/fhir/uv/anc/CodeSystem/iprd-custom-codes"
       - "https://iprdgroup.com/custom-codes"
       - "https://www.iprdgroup.com/ValueSet/OrganizationType/tags"
+      - "http://dummyorganization.org/type"
       - "http://iprdgroup.com/custom-codes/gestational-diabestes-blood-test"
       - "http://iprdgroup.com/outcome-of-visit"
       - "http://iprdgroup.com/custom-codes"
