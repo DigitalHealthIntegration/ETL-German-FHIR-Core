@@ -106,6 +106,8 @@ public class Constants {
   public static final String OMOP_DOMAIN_GENDER = "Gender";
   public static final String OMOP_DOMAIN_SPECIMEN_ANATOMIC_SITE = "Spec Anatomic Site";
   public static final String OMOP_DOMAIN_SPECIMEN = "Specimen";
+  public static final Integer FHIR_UNSPECIFIED_MALARIA_CONCEPT_ID = 35205903;
+  public static final Integer FHIR_UNSPECIFIED_MALARIA_SOURCE_CONCEPT_ID = 35205903;
 
   public static final ImmutableList<String> FHIR_RESOURCE_ACCEPTABLE_EVENT_STATUS_LIST =
       ImmutableList.of("in-progress", "on-hold", "completed", "unknown", "not-done");
@@ -145,5 +147,22 @@ public class Constants {
   public static final ImmutableList<String> FHIR_RESOURCE_GECCO_OBSERVATION_SOFA_CODES =
       ImmutableList.of("06");
 
+  public static final ImmutableList<String> FHIR_RESOURCE_IPRD_OBSERVATION_CODE =
+          ImmutableList.of("B54");
+
+  public static final ImmutableList<String> FHIR_RESOURCE_IPRD_PROCEDURE_CATEGORY =
+          ImmutableList.of("ANC.B9.DE114");
+  public static final ImmutableList<String> FHIR_RESOURCE_IPRD_IMMUNIZATION_CODE =
+          ImmutableList.of("ANC.B10.DE165","ANC.B10.DE167","ANC.B10.DE169","ANC.B10.DE171",
+                  "ANC.B10.DE173","ANC.B10.DE249","ANC.B10.DE245","ANC.B10.DE247",
+                  "IPRD.DE45","IPRD.DE46","IPRD.DE82","IPRD.DE83","IPRD.DE84",
+                  "IPRD.DE120","IPRD.DE121","IPRD.DE122","IPRD.DE123","IPRD.DE124",
+                  "IPRD.DE153","IPRD.DE138","IPRD.DE143","IPRD.DE146","IPRD.DE149","IPRD.DE139",
+                  "IPRD.DE140","IPRD.DE141","IPRD.DE144","IPRD.DE145","IPRD.DE147","IPRD.DE148","IPRD.DE150",
+                 "IPRD.DE151","IPRD.DE142","IPRD.DE152","IPRD.DE132","IPRD.DE133","IPRD.DE135","IPRD.DE134",
+                  "IPRD.DE136","IPRD.DE137","IPRD.DE131");
+
+  public static final ImmutableList<String> FHIR_RESOURCE_IPRD_CODE_FOR_LLIN =
+          ImmutableList.of("IPRD.DE20");
   private Constants() {}
 }

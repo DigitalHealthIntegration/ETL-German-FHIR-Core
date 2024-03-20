@@ -7,8 +7,13 @@ import static org.miracum.etl.fhirtoomop.Constants.FHIR_RESOURCE_GECCO_OBSERVATI
 import static org.miracum.etl.fhirtoomop.Constants.FHIR_RESOURCE_GECCO_OBSERVATION_ECRF_PARAMETER_DOMAIN_OBSERVATION;
 import static org.miracum.etl.fhirtoomop.Constants.FHIR_RESOURCE_GECCO_OBSERVATION_IN_MEASUREMENT_DOMAIN_CODES;
 import static org.miracum.etl.fhirtoomop.Constants.FHIR_RESOURCE_GECCO_OBSERVATION_SOFA_CODES;
+import static org.miracum.etl.fhirtoomop.Constants.FHIR_RESOURCE_IPRD_OBSERVATION_CODE;
+import static org.miracum.etl.fhirtoomop.Constants.FHIR_RESOURCE_MEDICATION_STATEMENT;
+import static org.miracum.etl.fhirtoomop.Constants.FHIR_RESOURCE_OBSERVATION;
 import static org.miracum.etl.fhirtoomop.Constants.FHIR_RESOURCE_OBSERVATION_ACCEPTABLE_STATUS_LIST;
 import static org.miracum.etl.fhirtoomop.Constants.FHIR_RESOURCE_OBSERVATION_HISTORY_OF_TRAVEL_CODES;
+import static org.miracum.etl.fhirtoomop.Constants.FHIR_UNSPECIFIED_MALARIA_CONCEPT_ID;
+import static org.miracum.etl.fhirtoomop.Constants.FHIR_UNSPECIFIED_MALARIA_SOURCE_CONCEPT_ID;
 import static org.miracum.etl.fhirtoomop.Constants.MAX_SOURCE_VALUE_LENGTH;
 import static org.miracum.etl.fhirtoomop.Constants.OMOP_DOMAIN_CONDITION;
 import static org.miracum.etl.fhirtoomop.Constants.OMOP_DOMAIN_GENDER;
@@ -67,6 +72,7 @@ import org.miracum.etl.fhirtoomop.model.StandardDomainLookup;
 import org.miracum.etl.fhirtoomop.model.OmopModelWrapper;
 import org.miracum.etl.fhirtoomop.model.PostProcessMap;
 import org.miracum.etl.fhirtoomop.model.omop.Concept;
+import org.miracum.etl.fhirtoomop.model.omop.ConceptRelationship;
 import org.miracum.etl.fhirtoomop.model.omop.ConditionOccurrence;
 import org.miracum.etl.fhirtoomop.model.omop.Measurement;
 import org.miracum.etl.fhirtoomop.model.omop.OmopObservation;
@@ -176,7 +182,7 @@ public class ObservationMapper implements FhirMapper<Observation> {
     var wrapper = new OmopModelWrapper();
 
     var observationLogicId = fhirReferenceUtils.extractId(srcObservation);
-//    var result = Objects.equals(observationLogicId, "obs-4243918b-f05c-411b-8474-2abc998944a5");
+//    var result = Objects.equals(observationLogicId, "obs-4283158f-7e61-436e-bb3d-67558e677cb5");
 //    if(!result){
 //      return null;
 //    }
@@ -605,6 +611,24 @@ public class ObservationMapper implements FhirMapper<Observation> {
     List<Pair<String, List<IcdSnomedDomainLookup>>> icdSnomedMapPairList = null;
     var observationVocabularyId =
         findOmopConcepts.getOmopVocabularyId(observationCoding.getSystem());
+
+    if(FHIR_RESOURCE_IPRD_OBSERVATION_CODE.contains(observationCoding.getCode())){
+      setObservation(
+              srcObservation,
+              personId,
+              visitOccId,
+              effectiveDateTime,
+              observationLogicId,
+              observationSourceIdentifier,
+              wrapper,
+              observationCoding.getCode(),
+              FHIR_UNSPECIFIED_MALARIA_CONCEPT_ID,
+              FHIR_UNSPECIFIED_MALARIA_SOURCE_CONCEPT_ID,
+              FHIR_RESOURCE_OBSERVATION,
+              observationId
+      );
+      return;
+    }
 
     if (FHIR_RESOURCE_GECCO_OBSERVATION_ECRF_PARAMETER_DOMAIN_OBSERVATION.contains(
         observationCoding.getCode())) {
@@ -1222,9 +1246,19 @@ public class ObservationMapper implements FhirMapper<Observation> {
         }
 
         if (valueCodingConcept != null) {
-          basisObservation.setValueAsConceptId(valueCodingConcept.getConceptId());
-          basisObservation.setValueAsString(valueCodingConcept.getConceptCode());
-          addToList(observations, basisObservation);
+          var conceptRelation =
+                  findOmopConceptRelationship.getConceptRelationShip(valueCodingConcept.getConceptId());
+          if(conceptRelation != null){
+            var valueStandardConcept =
+                    findOmopConcepts.getConcepts(conceptRelation.getConceptId2(),bulkload,dbMappings,observationId);
+            basisObservation.setValueAsConceptId(valueStandardConcept.getConceptId());
+            basisObservation.setValueAsString(valueStandardConcept.getConceptCode());
+            addToList(observations, basisObservation);
+          } else {
+            basisObservation.setValueAsConceptId(valueCodingConcept.getConceptId());
+            basisObservation.setValueAsString(valueCodingConcept.getConceptCode());
+            addToList(observations, basisObservation);
+          }
         }
       }
     }
@@ -1489,22 +1523,33 @@ public class ObservationMapper implements FhirMapper<Observation> {
             observationId);
     var valueQuantity = getValueQuantity(srcObservation);
     var valueCodeableConcept = getValueCodeableConcept(srcObservation);
+    var valueIntegerType = getValueInteger(srcObservation);
+    var valueStringType = getValueStringType(srcObservation);
+    var valueDateTimeType = getValueDateTimeType(srcObservation);
+    var valueBooleanType = getValueBooleanType(srcObservation);
 
-    if (valueQuantity == null && valueCodeableConcept == null) {
+    if (valueQuantity == null && valueCodeableConcept == null && valueIntegerType == null && valueStringType == null && valueDateTimeType == null && valueBooleanType == null) {
       log.debug(
-          "No [ValueQuantity] or [ValueCodeableConcept] found for [Observation]: {}. Skip resource.",
-          observationId);
+              "No [Value] found for [Observation]: {}. Skip resource.",
+              observationId);
       noValueCounter.increment();
       return null;
     }
     if (valueQuantity != null) {
       setValueQuantityInMeasurement(
           effectiveDateTime, measurements, basisMeasurement, valueQuantity, observationId);
-    } else {
+    } else if(valueCodeableConcept != null) {
       setValueCodeableConceptInMeasurement(
           effectiveDateTime, measurements, basisMeasurement, valueCodeableConcept, observationId);
+    }else if(valueIntegerType != null) {
+//      log.info("value = {} - observation id = {}",valueIntegerType,observationId);
+      var integerToBigDecimal = new BigDecimal(String.valueOf(valueIntegerType.getValue()));
+      basisMeasurement.setValueAsNumber(integerToBigDecimal);
+    }else if(valueStringType != null) {
+      log.info("value = {} - observation id = {}", valueStringType, observationId);
+      var processedValue = valueStringType.getValue().replaceAll("\n", " ").substring(0, Math.min(valueStringType.getValue().length(), 60));
+      basisMeasurement.setValueAsString(processedValue);
     }
-
     return basisMeasurement;
   }
 
@@ -1790,11 +1835,24 @@ public class ObservationMapper implements FhirMapper<Observation> {
           var valueCodingConcept =
               findOmopConcepts.getConcepts(
                   coding, effectiveDateTime.toLocalDate(), bulkload, dbMappings, observationId);
-          if (valueCodingConcept == null) {
-            continue;
+          if(valueCodingConcept!=null){
+            var conceptRelation =
+                    findOmopConceptRelationship.getConceptRelationShip(valueCodingConcept.getConceptId());
+            if(conceptRelation != null){
+              var valueStandardConcept =
+                      findOmopConcepts.getConcepts(conceptRelation.getConceptId2(),bulkload,dbMappings,observationId);
+              basisMeasurement.setValueAsConceptId(valueStandardConcept.getConceptId());
+              basisMeasurement.setValueAsString(valueStandardConcept.getConceptCode());
+            } else {
+              basisMeasurement.setValueAsConceptId(valueCodingConcept.getConceptId());
+              basisMeasurement.setValueSourceValue(valueCodingConcept.getConceptCode());
+            }
           }
-          basisMeasurement.setValueAsConceptId(valueCodingConcept.getConceptId());
-          basisMeasurement.setValueSourceValue(valueCodingConcept.getConceptCode());
+//          if (valueCodingConcept == null) {
+//            continue;
+//          }
+//          basisMeasurement.setValueAsConceptId(valueCodingConcept.getConceptId());
+//          basisMeasurement.setValueSourceValue(valueCodingConcept.getConceptCode());
         }
         addToList(measurements, basisMeasurement);
       }

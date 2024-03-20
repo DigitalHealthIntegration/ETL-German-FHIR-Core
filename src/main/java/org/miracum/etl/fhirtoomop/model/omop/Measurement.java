@@ -78,6 +78,10 @@ public class Measurement {
   @Column(name = "value_as_concept_id")
   private Integer valueAsConceptId;
 
+  /** The observation result stored as a string. */
+  @Column(name = "value_as_string")
+  private String valueAsString;
+
   /**
    * A foreign key to a Standard Concept ID of Measurement Units in the Standardized Vocabularies.
    */
