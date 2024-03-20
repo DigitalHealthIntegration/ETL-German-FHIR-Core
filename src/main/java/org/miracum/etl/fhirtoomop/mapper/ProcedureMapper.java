@@ -32,6 +32,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Procedure;
+import org.hl7.fhir.r4.model.ResourceType;
 import org.miracum.etl.fhirtoomop.DbMappings;
 import org.miracum.etl.fhirtoomop.config.FhirSystems;
 import org.miracum.etl.fhirtoomop.mapper.helpers.FindOmopConceptRelationship;
@@ -134,10 +135,6 @@ public class ProcedureMapper implements FhirMapper<Procedure> {
     var wrapper = new OmopModelWrapper();
 
     var procedureLogicId = fhirReferenceUtils.extractId(srcProcedure);
-//    var result = Objects.equals(procedureLogicId, "pro-326adaf7-019c-45a6-b52d-1e88d43ed0c7");
-//    if(!result){
-//      return null;
-//    }
     var procedureSourceIdentifier = fhirReferenceUtils.extractResourceFirstIdentifier(srcProcedure);
     if (Strings.isNullOrEmpty(procedureLogicId)
         && Strings.isNullOrEmpty(procedureSourceIdentifier)) {
@@ -183,7 +180,6 @@ public class ProcedureMapper implements FhirMapper<Procedure> {
     }
 
     var procedureCodings = getProcedureCodings(srcProcedure, procedureLogicId);
-
     if (procedureCodings.isEmpty()) {
       var procedureCategory = getProcedureCategory(srcProcedure);
       if(procedureCategory == null){
@@ -1190,7 +1186,7 @@ public class ProcedureMapper implements FhirMapper<Procedure> {
             new Timestamp(performedPeriod.getEndElement().getValue().getTime()).toLocalDateTime());
       }
     }
-    var fhirLogicalId = fhirReferenceUtils.extractId(org.hl7.fhir.r4.model.ResourceType.Encounter.name(), srcProcedure.getEncounter().getReferenceElement().getIdPart());
+    var fhirLogicalId = fhirReferenceUtils.extractId(ResourceType.Encounter.name(), srcProcedure.getEncounter().getReferenceElement().getIdPart());
     var visitDetail = departmentCaseMapperService.getVisitStartDateTimeByFhirLogicId(fhirLogicalId);
     if(visitDetail != null){
       resourceOnset.setStartDateTime(visitDetail.getVisitDetailStartDatetime());

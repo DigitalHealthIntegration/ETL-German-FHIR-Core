@@ -33,7 +33,7 @@ public class PractitionerRoleMapper implements FhirMapper<PractitionerRole> {
 
     private static final Counter noFhirReferenceCounter = MapperMetrics.setNoFhirReferenceCounter("stepProcessPractitionerRoles");
 
-
+    @Autowired
     public PractitionerRoleMapper(IFhirPath fhirPath, Boolean bulkload, DbMappings dbMappings) {
         this.fhirPath = fhirPath;
         this.bulkload = bulkload;

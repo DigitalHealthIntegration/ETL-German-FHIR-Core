@@ -122,6 +122,9 @@ public class TaskConfiguration {
   @Value("${data.fhirServer.baseUrl}")
   private String fhirBaseUrl;
 
+  @Value("${data.fhirServer.httpsEnabled}")
+  private Boolean fhirHttpsEnabled;
+
   @Bean
   public Boolean bulkload() {
     return this.bulkload;
@@ -429,11 +432,13 @@ public class TaskConfiguration {
       Step stepProcessConsent,
       Step stepProcessDiagnosticReport,
       Flow medicationStepsFlow,
-      Step stepProcessPractitionerRole) {
+      Step stepProcessPractitionerRole,
+      Step stepProcessQuestionnaireResponse) {
     return new FlowBuilder<SimpleFlow>("bulkload")
         .start(stepProcessOrganization)
             .next(stepProcessPractitionerRole)
             .next(stepProcessPractitioners)
+            .next(stepProcessQuestionnaireResponse)
             .next(stepProcessPatients)
         .next(stepProcessEncounterInstitutionContact)
             .next(stepEncounterDepartmentCase)
@@ -673,6 +678,7 @@ public class TaskConfiguration {
     fhirServerItemReader.setPageSize(pagingSize);
     fhirServerItemReader.setResourceTypeClass(resourceTypeName);
     fhirServerItemReader.setBeginDate(beginDateStr);
+    fhirServerItemReader.setFhirHttpsEnabled(fhirHttpsEnabled);
     fhirServerItemReader.setEndDate(endDateStr);
     fhirServerItemReader.setFhirParser(parser);
     fhirServerItemReader.setStepName(stepName);
@@ -769,7 +775,7 @@ public class TaskConfiguration {
             client,
             fhirParser,
             ResourceType.PRACTITIONERROLE.getDisplay(),
-            STEP_ENCOUNTER_INSTITUTION_KONTAKT);
+            "");
   }
 
   /**
@@ -1626,5 +1632,49 @@ public class TaskConfiguration {
   @Bean
   public Step postProcessStep(@Qualifier("writerDataSource") final DataSource dataSource) {
     return stepBuilderFactory.get("stepPostProcess").tasklet(postProsessTask(dataSource)).build();
+  }
+
+  @Bean
+  @StepScope
+  public ItemStreamReader<FhirPsqlResource> readerPsqlQuestionnaireResponse(
+          @Qualifier("readerDataSource") final DataSource dataSource,
+          IGenericClient client,
+          IParser fhirParser) {
+    var resourceType = ResourceType.QUESTIONNAIRERESPONSE.name();
+    log.info(FETCH_RESOURCES_LOG, resourceType);
+    if (StringUtils.isBlank(fhirBaseUrl)) {
+      return createResourceReader(resourceType, dataSource);
+    }
+    return fhirServerItemReader(
+            client,
+            fhirParser,
+            ResourceType.QUESTIONNAIRERESPONSE.getDisplay(),
+            "");
+  }
+
+  @Bean
+  public QuestionnaireResponseProcessor questionnaireResponseProcessor(IParser parser, QuestionnaireResponseMapper questionnaireResponseMapper){
+    return new QuestionnaireResponseProcessor(questionnaireResponseMapper,parser);
+  }
+
+  @Bean
+  public Step stepProcessQuestionnaireResponse(
+          QuestionnaireResponseProcessor questionnaireResponseProcessor,
+          QuestionnaireResponseStepListener questionnaireResponseStepListener,
+          ItemStreamReader<FhirPsqlResource> readerPsqlQuestionnaireResponse,
+          ItemWriter<OmopModelWrapper> writer) {
+    var stepProcessQuestionnaireResponseBuilder =
+            stepBuilderFactory
+                    .get("stepProcessQuestionnaireResponse")
+                    .listener(questionnaireResponseStepListener)
+                    .<FhirPsqlResource, OmopModelWrapper>chunk(batchChunkSize)
+                    .reader(readerPsqlQuestionnaireResponse)
+                    .processor(questionnaireResponseProcessor)
+                    .listener(new FhirResourceProcessListener())
+                    .writer(writer);
+    if(StringUtils.isBlank(fhirBaseUrl)){
+      stepProcessQuestionnaireResponseBuilder.throttleLimit(throttleLimit).taskExecutor(taskExecutor());
+    }
+    return stepProcessQuestionnaireResponseBuilder.build();
   }
 }

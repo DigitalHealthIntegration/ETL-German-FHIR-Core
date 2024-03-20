@@ -27,6 +27,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Immunization;
 import org.hl7.fhir.r4.model.Quantity;
+import org.hl7.fhir.r4.model.ResourceType;
 import org.miracum.etl.fhirtoomop.DbMappings;
 import org.miracum.etl.fhirtoomop.config.FhirSystems;
 import org.miracum.etl.fhirtoomop.mapper.helpers.FindOmopConceptRelationship;
@@ -98,11 +99,6 @@ public class ImmunizationMapper implements FhirMapper<Immunization> {
     var wrapper = new OmopModelWrapper();
 
     var immunizationLogicId = fhirReferenceUtils.extractId(srcImmunization);
-
-//    var result = Objects.equals(immunizationLogicId, "imm-71951e6b-3a46-4169-9c76-fc1e8eb4ba21");
-//    if(!result){
-//      return null;
-//    }
     var immunizationSourceIdentifier =
         fhirReferenceUtils.extractResourceFirstIdentifier(srcImmunization);
     if (Strings.isNullOrEmpty(immunizationLogicId)
@@ -849,6 +845,12 @@ public class ImmunizationMapper implements FhirMapper<Immunization> {
   private ResourceOnset getImmunizationOnset(Immunization srcImmunization) {
     var resourceOnset = new ResourceOnset();
     if (!srcImmunization.hasOccurrenceDateTimeType()) {
+      var fhirLogicalId = fhirReferenceUtils.extractId(ResourceType.Encounter.name(), srcImmunization.getEncounter().getReferenceElement().getIdPart());
+      var visitDetail = departmentCaseMapperService.getVisitStartDateTimeByFhirLogicId(fhirLogicalId);
+      if(visitDetail != null){
+        resourceOnset.setStartDateTime(visitDetail.getVisitDetailStartDatetime());
+        resourceOnset.setEndDateTime(visitDetail.getVisitDetailEndDatetime());
+      }
       return resourceOnset;
     }
 
@@ -861,12 +863,7 @@ public class ImmunizationMapper implements FhirMapper<Immunization> {
         resourceOnset.setEndDateTime(immunizationOccurrenceDateTime);
       }
     }
-    var fhirLogicalId = fhirReferenceUtils.extractId(org.hl7.fhir.r4.model.ResourceType.Encounter.name(), srcImmunization.getEncounter().getReferenceElement().getIdPart());
-    var visitDetail = departmentCaseMapperService.getVisitStartDateTimeByFhirLogicId(fhirLogicalId);
-    if(visitDetail != null){
-      resourceOnset.setStartDateTime(visitDetail.getVisitDetailStartDatetime());
-      resourceOnset.setEndDateTime(visitDetail.getVisitDetailEndDatetime());
-    }
+
     return resourceOnset;
   }
 

@@ -1,9 +1,6 @@
 package org.miracum.etl.fhirtoomop.mapper.helpers;
 
-import static org.miracum.etl.fhirtoomop.Constants.FHIR_RESOURCE_CONSENT;
-
 import ca.uhn.fhir.fhirpath.IFhirPath;
-import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.instance.model.api.IBaseResource;
@@ -11,6 +8,10 @@ import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
 import org.hl7.fhir.r4.model.StringType;
 import org.miracum.etl.fhirtoomop.config.FhirSystems;
+
+import java.util.Objects;
+
+import static org.miracum.etl.fhirtoomop.Constants.FHIR_RESOURCE_CONSENT;
 
 /**
  * The ResourceFhirReferenceUtils class is used to extract references to other FHIR resources from
