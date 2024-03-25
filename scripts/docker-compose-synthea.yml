@@ -1,0 +1,15 @@
+version: "3"
+services:
+ synthea:
+      build: 
+        dockerfile: Syntheadockerfile       
+      volumes:
+      - ./output:/synthea/output   
+      networks:
+        - cloudbuild
+        - default 
+  
+networks:
+  cloudbuild:
+    external: true
+    name: cloudbuild # Needed for Continuous integration
