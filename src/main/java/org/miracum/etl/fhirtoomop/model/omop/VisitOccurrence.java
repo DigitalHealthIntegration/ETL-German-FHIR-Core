@@ -114,4 +114,7 @@ public class VisitOccurrence {
   /** The identifier for the source data in the FHIR resource. */
   @Column(name = "fhir_identifier", nullable = true)
   private String fhirIdentifier;
+
+  @Column(name = "more_visit_source_value", nullable = true)
+  private String moreVisitSourceValue;
 }
