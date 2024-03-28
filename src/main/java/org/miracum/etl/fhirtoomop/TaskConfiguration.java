@@ -823,7 +823,6 @@ public class TaskConfiguration {
 
   @Bean
   public AppointmentProcessor appointmentProcessor(IParser parser, AppointmentMapper appointmentMapper) {
-
     return new AppointmentProcessor(appointmentMapper, parser);
   }
 

@@ -33,10 +33,13 @@ public class QuestionnaireResponseMapper implements FhirMapper<QuestionnaireResp
 
     @Autowired
     ResourceFhirReferenceUtils fhirReferenceUtils;
+
     @Autowired
     ResourceOmopReferenceUtils omopReferenceUtils;
 
     private static final Counter noFhirReferenceCounter = MapperMetrics.setNoFhirReferenceCounter("stepProcessPractitionerRoles");
+
+    private static final Counter noFhirReferenceCounter = MapperMetrics.setNoFhirReferenceCounter("stepProcessQuestionnaireResponse");
 
     @Autowired
     public QuestionnaireResponseMapper(IFhirPath fhirPath, Boolean bulkload, DbMappings dbMappings){
