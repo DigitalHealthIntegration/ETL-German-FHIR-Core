@@ -799,7 +799,7 @@ public class ImmunizationMapper implements FhirMapper<Immunization> {
             encounterReferenceIdentifier, encounterReferenceLogicalId, personId, immunizationId);
     if (visitOccId == null) {
       log.debug("No matching [Encounter] found for [Immunization]: {}.", immunizationId);
-      noMatchingEncounterCounter.increment();
+//      noMatchingEncounterCounter.increment();
     }
 
     return visitOccId;

@@ -359,7 +359,7 @@ public class MedicationStatementMapper implements FhirMapper<MedicationStatement
     if (visitOccId == null) {
       log.debug(
           "No matching [Encounter] found for [MedicationStatement]: {}.", medicationStatementId);
-      noMatchingEncounterCounter.increment();
+//      noMatchingEncounterCounter.increment();
     }
     return visitOccId;
   }
@@ -882,7 +882,7 @@ public class MedicationStatementMapper implements FhirMapper<MedicationStatement
     log.debug(
         "Unable to determine the [route value] for [MedicationStatement]: {}.",
         medicationStatementId);
-    invalidRouteValueCounter.increment();
+//    invalidRouteValueCounter.increment();
     return null;
   }
 
@@ -899,7 +899,7 @@ public class MedicationStatementMapper implements FhirMapper<MedicationStatement
     }
     log.debug(
         "Unable to determine the [dosage] for [MedicationStatement]: {}.", medicationStatementId);
-    invalidDosageCounter.increment();
+//    invalidDosageCounter.increment();
     return Collections.emptyList();
   }
 
@@ -916,7 +916,7 @@ public class MedicationStatementMapper implements FhirMapper<MedicationStatement
     }
     log.debug(
         "Unable to determine the [dose] for [MedicationStatement]: {}.", medicationStatementId);
-    invalidDoesCounter.increment();
+//    invalidDoesCounter.increment();
     return Collections.emptyList();
   }
 

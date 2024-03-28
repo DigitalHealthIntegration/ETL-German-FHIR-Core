@@ -372,7 +372,7 @@ public class MedicationAdministrationMapper implements FhirMapper<MedicationAdmi
       log.debug(
           "No matching [Encounter] found for [MedicationAdministration]: {}.",
           medicationAdministrationId);
-      noMatchingEncounterCounter.increment();
+//      noMatchingEncounterCounter.increment();
     }
     return visitOccId;
   }
@@ -782,7 +782,7 @@ public class MedicationAdministrationMapper implements FhirMapper<MedicationAdmi
     log.debug(
         "Unable to determine the [dose] for [MedicationAdministration]: {}.",
         medicationAdministrationId);
-    invalidDoesCounter.increment();
+//    invalidDoesCounter.increment();
     return null;
   }
 
@@ -799,7 +799,7 @@ public class MedicationAdministrationMapper implements FhirMapper<MedicationAdmi
       log.debug(
           "Unable to determine the [dosage] for [MedicationAdministration]: {}.",
           medicationAdministrationId);
-      invalidDosageCounter.increment();
+//      invalidDosageCounter.increment();
       return null;
     }
     return dosage;
@@ -828,7 +828,7 @@ public class MedicationAdministrationMapper implements FhirMapper<MedicationAdmi
     log.debug(
         "Unable to determine the [route value] for [MedicationAdministration]: {}.",
         medicationAdministrationId);
-    invalidRouteValueCounter.increment();
+//    invalidRouteValueCounter.increment();
     return null;
   }
 

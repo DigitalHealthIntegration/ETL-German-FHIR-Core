@@ -286,7 +286,7 @@ public class ObservationMapper implements FhirMapper<Observation> {
             encounterReferenceIdentifier, encounterReferenceLogicalId, personId, observationId);
     if (visitOccId == null) {
       log.debug("No matching [Encounter] found for [Observation]: {}.", observationId);
-      noMatchingEncounterCounter.increment();
+//      noMatchingEncounterCounter.increment();
     }
 
     return visitOccId;
@@ -359,7 +359,7 @@ public class ObservationMapper implements FhirMapper<Observation> {
       log.debug(
           "No [result for History-of-travel] found in [Observation]: {}. Skip resource.",
           observationId);
-      noResultHistoryOfTravelCounter.increment();
+//      noResultHistoryOfTravelCounter.increment();
       return;
     }
     var value =
@@ -373,14 +373,14 @@ public class ObservationMapper implements FhirMapper<Observation> {
       log.debug(
           "No [acceptable result for History-of-travel] found in [Observation]: {}. Skip resource.",
           observationId);
-      noAcceptableResultHistoryOfTravelCounter.increment();
+//      noAcceptableResultHistoryOfTravelCounter.increment();
       return;
     }
     if (!srcObservation.hasComponent()) {
       log.debug(
           "No [available information for History-of-travel] found in [Observation]: {}. Skip resource.",
           observationId);
-      noAvailableInfoHistoryOfTravelCounter.increment();
+//      noAvailableInfoHistoryOfTravelCounter.increment();
       return;
     }
 
@@ -389,7 +389,7 @@ public class ObservationMapper implements FhirMapper<Observation> {
       log.debug(
           "No [available information for History-of-travel] found in [Observation]: {}. Skip resource.",
           observationId);
-      noAvailableInfoHistoryOfTravelCounter.increment();
+//      noAvailableInfoHistoryOfTravelCounter.increment();
       return;
     }
 
@@ -1350,7 +1350,7 @@ public class ObservationMapper implements FhirMapper<Observation> {
   private String getInterpretation(Observation srcObservation, String observationId) {
     if (!srcObservation.hasInterpretation() || srcObservation.getInterpretation().isEmpty()) {
       log.debug("No [Interpretation] found in [Observation]: {}.", observationId);
-      noInterpretationCounter.increment();
+//      noInterpretationCounter.increment();
       return null;
     }
     var interpretation =
@@ -1360,7 +1360,7 @@ public class ObservationMapper implements FhirMapper<Observation> {
 
     if (interpretation.isEmpty()) {
       log.debug("No [Interpretation] found in [Observation]: {}.", observationId);
-      noInterpretationCounter.increment();
+//      noInterpretationCounter.increment();
       return null;
     }
     return interpretation.get().getCode();
@@ -1871,7 +1871,7 @@ public class ObservationMapper implements FhirMapper<Observation> {
 
     if (referenceRange == null) {
       log.debug("No [Reference Range] found in [Observation]: {}.", observationId);
-      noReferenceRangeCounter.increment();
+//      noReferenceRangeCounter.increment();
       return;
     }
 
@@ -1879,14 +1879,14 @@ public class ObservationMapper implements FhirMapper<Observation> {
       newLabMeasurement.setRangeHigh(referenceRange.getHigh().getValue());
     } else {
       log.debug("Missing [high range] for [Observation]: {}.", observationId);
-      missingHighRangeCounter.increment();
+//      missingHighRangeCounter.increment();
     }
 
     if (referenceRange.hasLow() && referenceRange.getLow() != null) {
       newLabMeasurement.setRangeLow(referenceRange.getLow().getValue());
     } else {
       log.debug("Missing [low range] for [Observation]: {}.", observationId);
-      missingLowRangeCounter.increment();
+//      missingLowRangeCounter.increment();
     }
   }
 
@@ -1915,7 +1915,7 @@ public class ObservationMapper implements FhirMapper<Observation> {
       log.warn(
           "No [Category] found for [Observation]: {}. Invalid resource. Please Check.",
           observationId);
-      noCategoryCount.increment();
+//      noCategoryCount.increment();
       return null;
     }
     var categories = srcObservation.getCategory();

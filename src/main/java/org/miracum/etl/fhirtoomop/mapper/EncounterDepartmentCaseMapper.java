@@ -428,7 +428,7 @@ public class EncounterDepartmentCaseMapper implements FhirMapper<Encounter> {
         log.warn(
             "No [start date] found for [Location] in [Encounter]: {}. Skip the [Location].",
             departmentCaseId);
-        noStartDateFoundInLocationCounter.increment();
+//        noStartDateFoundInLocationCounter.increment();
         continue;
       }
 
@@ -468,7 +468,7 @@ public class EncounterDepartmentCaseMapper implements FhirMapper<Encounter> {
       log.warn(
           "No [Location Reference] found. [Encounter]: {} is invalid. Please check.",
           departmentCaseId);
-      noLocationReferenceFoundCounter.increment();
+//      noLocationReferenceFoundCounter.increment();
       return Collections.emptyList();
     }
     return srcDepartmentCaseEncounter.getLocation();
@@ -532,7 +532,7 @@ public class EncounterDepartmentCaseMapper implements FhirMapper<Encounter> {
             .findAny();
     if (fabSourceValue.isEmpty()) {
       log.debug("No department [FAB] code found for [Encounter]: {}.", departmentCaseId);
-      noDepartmentCodeFoundCounter.increment();
+//      noDepartmentCodeFoundCounter.increment();
       return null;
     }
     return fabSourceValue.get().getCode();
