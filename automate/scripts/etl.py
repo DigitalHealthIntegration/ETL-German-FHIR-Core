@@ -73,7 +73,7 @@ def run_etl(with_hapi=False,synthetic_data_dir=None,synthea=False,omop_version=N
             else:
                 print("download only vocab")
                 etl_utils.download_latest_vocab_from_s3(omop_version)
-                hash_from_s3 = etl_utils.read_file(os.path.join(etl_constants.current_directory,f"{omop_version}/md5_hash.txt"))
+                hash_from_s3 = etl_utils.read_file(f"../../{omop_version}/md5_hash.txt")
                 etl_utils.update_json_file(omop_version,hash_from_s3,"latest_version_hash.json")
                 print("download vocab completed")
 
@@ -81,9 +81,9 @@ def run_etl(with_hapi=False,synthetic_data_dir=None,synthea=False,omop_version=N
             print("download both vocab and hash")
             etl_utils.download_hash_from_s3(omop_version)
             etl_utils.download_latest_vocab_from_s3(omop_version)
-            hash_from_s3 = etl_utils.read_file(os.path.join(etl_constants.current_directory,f"{omop_version}/md5_hash.txt"))
-            etl_utils.update_json_file(omop_version,hash_from_s3,"latest_version_hash.json")
-            latest_version, latest_hash = etl_utils.read_version_and_md5_hash_from_json("latest_version_hash.json")
+            hash_from_s3 = etl_utils.read_file(f"../../{omop_version}/md5_hash.txt")
+            etl_utils.update_json_file(omop_version,hash_from_s3,"../../latest_version_hash.json")
+            latest_version, latest_hash = etl_utils.read_version_and_md5_hash_from_json("../../latest_version_hash.json")
             if latest_version == hash_from_s3:
                 etl_utils.unzip_vocab(folder_name) 
             print("download vocab and hash completed")
