@@ -1,0 +1,56 @@
+version: "3.7"
+
+services:
+  omop-db-postgress:
+    image: postgres:16.1
+    container_name: omop-db-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ohdsi_admin_user
+      POSTGRES_PASSWORD: admin1
+      POSTGRES_DB: ohdsi
+    command:
+      - "postgres"
+      - "-c"
+      - "max_wal_size=4GB"
+    volumes:
+      - omop-postgress:/var/lib/postgresql/data
+      - ../omop-vocab:/home/vocab
+      - ./postgres-init:/docker-entrypoint-initdb.d
+      - ./health-check-postgres:/home/health
+    ports:
+      - "5412:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "sh /home/health/check-status.sh"]
+      interval: 1200s
+      timeout: 60s
+      start_period: 30s
+      retries: 5
+    networks:
+      - cloudbuild
+      - default
+
+  # jupyter:
+  #   container_name: jupyter_notebook
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile_jupyter
+  #   command: start-notebook.sh --NotebookApp.token='cb0nxGAG'
+  #   volumes:
+  #     - ../query:/home/jovyan/query
+  #   ports:
+  #     - 8888:8888
+  #   depends_on:
+  #     ohdsi-germany:
+  #       condition: service_completed_successfully
+  #   networks:
+  #     - cloudbuild
+  #     - default
+
+volumes:
+  omop-postgress:
+
+networks:
+  cloudbuild:
+    external: true
+    name: cloudbuild # Needed for Continuous integration
