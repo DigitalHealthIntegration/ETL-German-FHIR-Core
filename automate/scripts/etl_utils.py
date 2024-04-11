@@ -11,6 +11,8 @@ import etl_constants
 import psycopg2
 import json
 import time
+import requests
+from dotenv import set_key
 
     
 def run_docker_compose(yaml_path):
@@ -21,10 +23,6 @@ def run_docker_compose(yaml_path):
         print("Docker Compose executed successfully.")
     except subprocess.CalledProcessError as e:
         print("Error running Docker Compose command:", e)
-    except KeyboardInterrupt:
-        print("Process interrupted by the user.")
-        # Perform any necessary cleanup here
-        raise 
         
 def run_docker_compose_with_logs(yaml_path):
     try:
@@ -34,10 +32,6 @@ def run_docker_compose_with_logs(yaml_path):
         print("Docker Compose executed successfully.")
     except subprocess.CalledProcessError as e:
         print("Error running Docker Compose command:", e)
-    except KeyboardInterrupt:
-        print("Process interrupted by the user.")
-        # Perform any necessary cleanup here
-        raise 
 
 def remove_docker_containers(yaml_path):
     try:
@@ -47,10 +41,6 @@ def remove_docker_containers(yaml_path):
         print("Docker Compose down executed successfully.")
     except subprocess.CalledProcessError as e:
         print("Error running Docker Compose command:", e)
-    except KeyboardInterrupt:
-        print("Process interrupted by the user.")
-        # Perform any necessary cleanup here
-        raise 
 
 def remove_docker_volume(volume_name):
     client = docker.from_env()
@@ -71,7 +61,7 @@ def remove_docker_volume(volume_name):
     #     print("Error removing Docker volume:", e)
 
 
-def upload_synthea_data_to_hapi(file_path = "output\\fhir"):
+def upload_synthea_data_to_hapi(file_path = ".././synthea/output/fhir"):
     #fhir server endpoint
     URL = "http://localhost:8080/fhir/"
 
@@ -94,7 +84,7 @@ def upload_synthea_data_to_hapi(file_path = "output\\fhir"):
     else:
         full_path = os.path.join(script_directory, file_path)
     print(full_path)
-    full_path = os.path.join(script_directory, relative_path)
+    # full_path = os.path.join(script_directory, relative_path)
 
     for dirpath, dirnames, files in os.walk(full_path):
 
@@ -171,7 +161,7 @@ def connect_to_database():
                                           host="localhost",
                                           port="5412",
                                           database="ohdsi")
-        print("connected to databse")
+        print("connected to database")
         return connection
     except (Exception, psycopg2.Error) as error:
         print("Error retrieving load status:", error)
@@ -202,7 +192,7 @@ def retrieve_load_status(connection):
 def truncate_omop_tables():
     connection = connect_to_database()
     if connection:
-        tables_to_truncate = ["cds_cdm.person"]  # List of tables to truncate
+        tables_to_truncate = ["cds_cdm.person","cds_cdm.observation","cds_cdm.visit_occurrence","cds_cdm.visit_detail","cds_cdm.condition_occurrence","cds_cdm.drug_exposure","cds_cdm.procedure_occurrence","cds_cdm.measurement","cds_cdm.death","cds_cdm.specimen","cds_cdm.location","cds_cdm.care_site","cds_cdm.provider"]  # List of tables to truncate
         truncate_tables(connection, tables_to_truncate)
         connection.close()
         print("Database connection closed.")
@@ -302,70 +292,71 @@ def update_json_file(version, md5_hash, file_path):
         print(f"Error updating JSON file: {e}")
 
 def unzip_vocab(folder_name):
-    zip_local_file_path = os.path.join(etl_constants.current_directory,f"{folder_name}/omop-voacb.zip")
-    unzip_at_path = os.path.join(etl_constants.current_directory,"omop_vocab")
+    zip_local_file_path = f"../../{folder_name}/omop-vocab.zip"
+    unzip_at_path = "../../omop-vocab"
     if not os.path.exists(unzip_at_path):
             os.makedirs(unzip_at_path)
             print(f"Created folder: {unzip_at_path}")
-    with zipfile.ZipFile(local_file_path, 'r') as zip_ref:
+    with zipfile.ZipFile(zip_local_file_path, 'r') as zip_ref:
         zip_ref.extractall(os.path.dirname(unzip_at_path))
-        print(f"File '{file_name}.zip' unzipped successfully.")
+        print(f"File 'omop-vocab.zip' unzipped successfully.")
 
 def calculate_retry_delay(attempt):
     if attempt <= 5:
-        return min(2 ** attempt if attempt > 1 else 30, 90)
+        return min(2 ** (attempt - 1), 60)  # Exponential backoff up to 60 seconds
     else:
-        return 60 # 2 minutes in milliseconds
+        return 60  # After 5 attempts, wait for 60 seconds
 
-def extract_logs(input_file, output_file):
-    try:
-        with open(input_file, 'r') as f:
-            lines = f.readlines()
 
-        start_marker = "==== Summary ===="
-        end_marker = "==== Job End ===="
+# def extract_logs(input_file, output_file):
+#     try:
+#         with open(input_file, 'r') as f:
+#             lines = f.readlines()
 
-        start_index = None
-        end_index = None
+#         start_marker = "==== Summary ===="
+#         end_marker = "==== Job End ===="
 
-        for i, line in enumerate(lines):
-            if start_marker in line:
-                start_index = i
-            elif end_marker in line:
-                end_index = i
-                break
+#         start_index = None
+#         end_index = None
 
-        if start_index is not None and end_index is not None:
-            extracted_lines = []
+#         for i, line in enumerate(lines):
+#             if start_marker in line:
+#                 start_index = i
+#             elif end_marker in line:
+#                 end_index = i
+#                 break
 
-            for line in lines[start_index:end_index + 1]:
-                parts = line.split("FhirToOmopJobListener", 1)
-                if len(parts) > 1:
-                    cleaned_line = parts[1].strip()
-                    extracted_lines.append(cleaned_line + '\n')
+#         if start_index is not None and end_index is not None:
+#             extracted_lines = []
 
-            with open(output_file, 'w') as f:
-                f.writelines(extracted_lines)
+#             for line in lines[start_index:end_index + 1]:
+#                 parts = line.split("FhirToOmopJobListener", 1)
+#                 if len(parts) > 1:
+#                     cleaned_line = parts[1].strip()
+#                     extracted_lines.append(cleaned_line + '\n')
+
+#             with open(output_file, 'w') as f:
+#                 f.writelines(extracted_lines)
             
-            print(f"Extracted logs and saved to '{output_file}'")
-        else:
-            print("Start or end marker not found.")
+#             print(f"Extracted logs and saved to '{output_file}'")
+#         else:
+#             print("Start or end marker not found.")
 
-    except Exception as e:
-        print(f"Error extracting logs: {e}")
+#     except Exception as e:
+#         print(f"Error extracting logs: {e}")
 
-def download_container_logs(yaml_path):
-    try:
-        # Run Docker Compose command in CMD
-        with subprocess.Popen(f'docker-compose -f "{yaml_path}" logs ohdsi-germany > .././etl_report/full_report.txt', shell=True) as process:
-            process.wait()  # Wait for the process to complete
-        print("Docker logs downloaded ")
-    except subprocess.CalledProcessError as e:
-        print("Error running Docker Compose command:", e)
-    except KeyboardInterrupt:
-        print("Process interrupted by the user.")
-        # Perform any necessary cleanup here
-        raise
+# def download_container_logs(yaml_path):
+#     try:
+#         # Run Docker Compose command in CMD
+#         with subprocess.Popen(f'docker-compose -f "{yaml_path}" logs ohdsi-germany > .././etl_report/full_report.txt', shell=True) as process:
+#             process.wait()  # Wait for the process to complete
+#         print("Docker logs downloaded ")
+#     except subprocess.CalledProcessError as e:
+#         print("Error running Docker Compose command:", e)
+#     except KeyboardInterrupt:
+#         print("Process interrupted by the user.")
+#         # Perform any necessary cleanup here
+#         raise
 
 def run_etl_pipeline():
     connection = None
@@ -377,8 +368,8 @@ def run_etl_pipeline():
             if connection:
                 if retrieve_load_status(connection):
                     run_docker_compose("../../deploy/docker-compose-etl.yml")
-                    download_container_logs("../../deploy/docker-compose-etl.yml")
-                    extract_logs(".././etl_report/full_report.txt",".././etl_report/summary_report.txt")
+                    # download_container_logs("../../deploy/docker-compose-etl.yml")
+                    # extract_logs(".././etl_report/full_report.txt",".././etl_report/summary_report.txt")
                     break
             retry_attempts += 1
             retry_delay = calculate_retry_delay(retry_attempts)
@@ -387,3 +378,30 @@ def run_etl_pipeline():
     if connection:
         connection.close()
         print("database connection closed")
+
+def update_dotenv_file(value):
+   # Define the path to your .env file
+    env_file_path = '../../deploy/.env'
+
+    # Define the variable you want to update
+    variable_to_update = 'APP_BULKLOAD_ENABLED'
+
+    # Define the new value
+    new_value = value
+
+    # Read the contents of the .env file
+    with open(env_file_path, 'r') as file:
+        lines = file.readlines()
+
+    # Update the value if the variable is found
+    updated_lines = []
+    for line in lines:
+        if line.strip().startswith(variable_to_update + '='):
+            line = f"{variable_to_update}={new_value}\n"
+        updated_lines.append(line)
+
+    # Write the updated contents back to the .env file
+    with open(env_file_path, 'w') as file:
+        file.writelines(updated_lines)
+
+    print(f"Updated {variable_to_update} to {new_value} in {env_file_path}")

@@ -8,14 +8,16 @@
 
     <!-- File Appender -->
     <appender name="FILE" class="ch.qos.logback.core.FileAppender">
-        <file>logfile.log</file>
+        <file>/home/logs/logfile.log</file>
+        <append>false</append>
         <encoder>
             <pattern>%date %-5level [%thread] %logger{35} - %msg%n</pattern>
         </encoder>
     </appender>
 
     <appender name="MARKER_FILE" class="ch.qos.logback.core.FileAppender">
-        <file>marker.log</file>
+        <file>/home/logs/marker.log</file>
+        <append>false</append>
         <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
             <evaluator class="ch.qos.logback.classic.boolex.OnMarkerEvaluator">
                 <marker>summary</marker>
@@ -24,7 +26,7 @@
             <onMismatch>DENY</onMismatch>
         </filter>
         <encoder>
-            <pattern>%date %-5level [%thread] %logger{35} - %msg%n</pattern>
+            <pattern>%msg%n</pattern>
         </encoder>
     </appender>
 
