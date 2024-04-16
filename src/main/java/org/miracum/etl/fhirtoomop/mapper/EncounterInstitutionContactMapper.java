@@ -330,7 +330,12 @@ public class EncounterInstitutionContactMapper implements FhirMapper<Encounter> 
     var visitTypeConceptId = getVisitTypeConceptId(srcEncounter, endDateTime);
     var visitEndDateTime = setVisitEndDateTime(visitTypeConceptId, endDateTime, encounterId);
     var careSiteId = getCareSiteId(srcEncounter.getServiceProvider().getReferenceElement().getIdPart());
-    var visitSourceValue = srcEncounter.getMeta().getTagFirstRep().getCode();
+    String visitSourceValue = null;
+    if(srcEncounter.getMeta().hasTag()){
+      visitSourceValue =  srcEncounter.getMeta().getTagFirstRep().getCode();
+    } else{
+      visitSourceValue = srcEncounter.getClass_().getDisplay();
+    }
     if (careSiteId == null){
       log.debug("No [CareSite] found for the encounter: {}", encounterId);
       return null;
