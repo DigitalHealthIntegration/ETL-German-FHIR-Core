@@ -13,7 +13,8 @@ import json
 import time
 import requests
 from dotenv import set_key
-
+from fhir.resources.R4B.fhirtypesvalidators import bundle_validator
+from pathlib import Path
     
 def run_docker_compose(yaml_path):
     try:
@@ -60,21 +61,54 @@ def remove_docker_volume(volume_name):
     # except subprocess.CalledProcessError as e:
     #     print("Error removing Docker volume:", e)
 
+def validate_file_for_fhir(file_path):
+    try: 
+        # Assuming bundle_data contains the Bundle resource data in dictionary format
+        bundle_data = Path(file_path)
 
-def upload_synthea_data_to_hapi(file_path = ".././synthea/output/fhir"):
+        # Validate the Bundle resource
+        bundle_validator(bundle_data)
+        print("Bundle Validated Successfully")
+        return True
+    except ValueError as e:
+        print("Validation errors:")
+        print(e)
+        return False
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return False
+
+def process_and_upload_file(file_path):
     #fhir server endpoint
     URL = "http://localhost:8080/fhir/"
 
     #fhir server json header content
     headers = {"Content-Type": "application/fhir+json;charset=utf-8"}
     print("started running script")
-    def process_and_upload_file(file_path):
+    if validate_file_for_fhir(file_path):
+        print(f"File contains valid Fhir Resource {file_path}")
+        print("Initiating Data Upload...")
         with open(file_path, "r", encoding="utf8") as bundle_file:         
                 data = bundle_file.read()
                 r = requests.post(url = URL, data = data.encode("utf-8"), headers = headers)
-                #output file name that was processed
-                print(file_path)
+                if r.status_code == requests.codes.ok:  # Check if the response is successful
+                    print("Response uploaded successfully.")
+                    print("Response Content:")
+                    # print(r.text)  # Print the full response content
+                    # Output file name that was processed
+                    print("Processed File:", file_path)
+                        
+                else:
+                    print("Error:", r.status_code)
+                    print("Response Content:")
+                    print(r.text)  # Print the full response content if available
+                        
+    else:
+        print("File contains invalid Resources")
 
+def upload_synthea_data_to_hapi(file_path = ".././synthea/output/fhir"):
+    
     script_directory = os.path.dirname(os.path.abspath(__file__))
 
     # Assuming the output/fhir directory is inside the parent directory
@@ -103,7 +137,6 @@ def upload_synthea_data_to_hapi(file_path = ".././synthea/output/fhir"):
         for file_name in files:
             file_path = os.path.join(full_path, file_name)
             process_and_upload_file(file_path)
-        print("completed")  
             
 def delete_files_from_given_path(folder_path):
     try:

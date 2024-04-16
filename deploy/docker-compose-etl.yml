@@ -2,7 +2,7 @@ version: "3.7"
 
 services:
   ohdsi-germany:
-    image: fhir-to-omop:latest
+    # image: fhir-to-omop:latest
     build: ../
     environment:
       JAEGER_SERVICE_NAME: "fhir-to-omop"
@@ -71,6 +71,7 @@ services:
     volumes:
       # - ./cacerts:/etc/ssl/certs/java/cacerts
       - ./health-check-omop:/home/health
+      - ./logs:/home/logs
     # depends_on:
     #   omop-db-postgress:
     #     condition: service_healthy

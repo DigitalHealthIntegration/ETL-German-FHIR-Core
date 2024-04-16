@@ -1,13 +1,15 @@
 version: "3"
 services:
- synthea:
+  synthea:
       build: 
         dockerfile: Syntheadockerfile       
       volumes:
       - ./output:/synthea/output   
       networks:
         - cloudbuild
-        - default 
+        - default
+volumes:
+  hapi-fhir-postgres:
   
 networks:
   cloudbuild:

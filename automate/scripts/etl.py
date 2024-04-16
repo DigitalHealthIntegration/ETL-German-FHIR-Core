@@ -5,25 +5,28 @@ import etl_constants
 
 def reset_etl(with_hapi=False,synthetic_data_dir=None,synthea=False,hapi=False,omop=False,vocab=None,all=False):
     if vocab:
-        print("reset omop initiated...")
+        print("Reset VOCAB initiated...")
         etl_utils.remove_docker_containers("../../deploy/docker-compose-postgress.yml")
         etl_utils.remove_docker_containers("../../deploy/docker-compose-etl.yml")
         etl_utils.remove_docker_volume(etl_constants.omop_postgress_volume_name)
         verify_vocab_and_download(vocab)
         # etl_utils.run_docker_compose("../../deploy/docker-compose-postgress.yml")
+        print("Reset VOCAB completed...")
         return
     if omop:
-        print("reset omop initiated...")
+        print("Reset OMOP initiated...")
         etl_utils.truncate_omop_tables()
+        print("Reset OMOP completed...")
         return
     if hapi:
-        print("reset hapi initiated...")
+        print("Reset HAPI initiated...")
         etl_utils.truncate_omop_tables()
         etl_utils.remove_docker_containers(".././hapi/docker-compose-hapi.yml")
         etl_utils.remove_docker_volume(etl_constants.hapi_db_volume_name)
+        print("Reset HAPI completed...")
         return
     if all:
-        print("reset everything initiated.....")
+        print("Reset Everything initiated...")
         etl_utils.remove_docker_containers("../../deploy/docker-compose-postgress.yml")
         etl_utils.remove_docker_containers("../../deploy/docker-compose-etl.yml")
         etl_utils.remove_docker_containers(".././hapi/docker-compose-hapi.yml")
@@ -35,12 +38,14 @@ def reset_etl(with_hapi=False,synthetic_data_dir=None,synthea=False,hapi=False,o
         etl_utils.delete_files_from_given_path(".././synthea/output/metadata")
         etl_utils.download_vocab_from_s3()
         etl_utils.run_docker_compose(".././hapi/docker-compose-hapi.yml")
+        print("Reset Everything completed...")
         return
     if synthea:
-        print("reset synthea initiated")
+        print("Reset Synthea initiated...")
         etl_utils.remove_docker_containers(".././synthea/docker-compose-synthea.yml")
         etl_utils.delete_files_from_given_path(".././synthea/output/fhir")
         etl_utils.delete_files_from_given_path(".././synthea/output/output/metadata")
+        print("Reset Synthea completed...")    
     print(synthetic_data_dir)
     print(synthea)
 
@@ -61,6 +66,7 @@ def run_etl(with_hapi=False,synthetic_data_dir=None,synthea=False,omop_version=N
         # return
     elif synthetic_data_dir:
         print(f"Synthetic Data Directory: {synthetic_data_dir}")
+        etl_utils.upload_synthea_data_to_hapi(synthetic_data_dir)
         return
     elif synthea:
         print(f"Synthea: {synthea}")
@@ -85,7 +91,7 @@ def run_etl(with_hapi=False,synthetic_data_dir=None,synthea=False,omop_version=N
 
 def main():
     # Create an ArgumentParser object
-    parser = argparse.ArgumentParser(description='ETL Script')
+    parser = argparse.ArgumentParser(description='ETL Automation Script')
 
     # Add arguments
     parser.add_argument('action', choices=['run','reset','set'], default='run', help='Action to perform')
@@ -141,6 +147,7 @@ def set_etl(vocab=None,hapi=False,synthea=False,synthetic_data_dir=None):
             etl_utils.upload_synthea_data_to_hapi(synthetic_data_dir)
 
 def verify_vocab_and_download(vocab_version):
+    print("Verifying the VOCAB")
     current_version, current_hash = etl_utils.read_version_and_md5_hash_from_json("../../latest_version_hash.json")
     if current_version == vocab_version:
         download_hash_file = etl_utils.download_hash_from_s3(vocab_version)
@@ -148,14 +155,14 @@ def verify_vocab_and_download(vocab_version):
         if current_hash == hash_from_s3:
             print("all ok")
         else:
-            print("download only vocab")
+            print("Download only VOCAB")
             etl_utils.download_latest_vocab_from_s3(vocab_version)
             hash_from_s3 = etl_utils.read_file(f"../../{vocab_version}/md5_hash.txt")
             etl_utils.update_json_file(vocab_version,hash_from_s3,"latest_version_hash.json")
-            print("download vocab completed")
+            print("Download VOCAB completed")
 
     else:
-        print("download both vocab and hash")
+        print("Download both VOCAB and hash")
         etl_utils.download_hash_from_s3(vocab_version)
         etl_utils.download_latest_vocab_from_s3(vocab_version)
         hash_from_s3 = etl_utils.read_file(f"../../{vocab_version}/md5_hash.txt")
@@ -163,7 +170,7 @@ def verify_vocab_and_download(vocab_version):
         latest_version, latest_hash = etl_utils.read_version_and_md5_hash_from_json("../../latest_version_hash.json")
         if latest_hash == hash_from_s3:
             etl_utils.unzip_vocab(vocab_version) 
-        print("download vocab and hash completed")
+        print("Download VOCAB and hash completed")
 
 if __name__ == "__main__":
     main()
