@@ -15,9 +15,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StopWatch;
 import javax.sql.DataSource;
 
-import static org.miracum.etl.fhirtoomop.Constants.*;
-import static org.miracum.etl.fhirtoomop.Constants.VOCABULARY_ICD10GM;
-
 @Slf4j
 @Component
 public class AppointmentStepListener implements StepExecutionListener {

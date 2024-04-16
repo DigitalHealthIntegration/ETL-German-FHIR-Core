@@ -442,15 +442,15 @@ public class TaskConfiguration {
             .next(stepProcessPractitioners)
             .next(stepProcessQuestionnaireResponse)
             .next(stepProcessPatients)
-        .next(stepProcessEncounterInstitutionContact)
+            .next(stepProcessEncounterInstitutionContact)
             .next(stepEncounterDepartmentCase)
-        .next(medicationStepsFlow)
-        .next(stepProcessConditions)
-        .next(stepProcessObservations)
-        .next(stepProcessProcedures)
-        .next(stepProcessImmunization)
-        .next(stepProcessConsent)
-        .next(stepProcessDiagnosticReport)
+            .next(medicationStepsFlow)
+            .next(stepProcessConditions)
+            .next(stepProcessObservations)
+            .next(stepProcessProcedures)
+            .next(stepProcessImmunization)
+            .next(stepProcessConsent)
+            .next(stepProcessDiagnosticReport)
             .next(stepProcessProvenance)
             .next(stepProcessAppointments)
         .build();
@@ -673,12 +673,12 @@ public class TaskConfiguration {
           IGenericClient client,
           IParser fhirParser) {
 
-    var resourceType = "Appointment";
+    var resourceType = ResourceType.APPOINTMENT.getDisplay();
     log.info(FETCH_RESOURCES_LOG, resourceType);
     if (StringUtils.isBlank(fhirBaseUrl)) {
       return createResourceReader(resourceType, dataSource);
     }
-    return fhirServerItemReader(client, fhirParser, ResourceType.APPOINTMENT.getDisplay(), "");
+    return fhirServerItemReader(client, fhirParser, resourceType, "");
   }
 
   /**
