@@ -41,6 +41,9 @@ public class Appointment {
     @Column(name = "created_datetime")
     private LocalDateTime createdDateTime;
 
+    @Column(name = "appointment_description", nullable = true)
+    private String appointmentDescription;
+
     @Column(name = "appointment_status")
     private String appointmentStatus;
 

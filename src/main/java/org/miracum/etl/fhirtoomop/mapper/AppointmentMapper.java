@@ -57,6 +57,7 @@ public class AppointmentMapper implements FhirMapper<Appointment> {
             statusErrorCounter.increment();
             return null;
         }
+        var appointmentDescription = srcAppointment.getDescription();
         var createdDateTime = srcAppointment.hasCreated() ? srcAppointment.getCreated().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime() : null;
         var appointmentDateTime = srcAppointment.hasStart() ? srcAppointment.getStart().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime() : null;
         if (createdDateTime == null || appointmentDateTime == null){
@@ -66,6 +67,7 @@ public class AppointmentMapper implements FhirMapper<Appointment> {
                 .scheduledDateTime(appointmentDateTime)
                 .createdDateTime(createdDateTime)
                 .appointmentStatus(appointmentStatus)
+                .appointmentDescription(appointmentDescription)
                 .fhirLogicalId(appointmentLogicalId).build();
         wrapper.setAppointment(appointment);
         return wrapper;
