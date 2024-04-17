@@ -100,6 +100,7 @@ services:
     volumes:
       # - ./cacerts:/etc/ssl/certs/java/cacerts
       - ./health-check-omop:/home/health
+      - ./logs:/home/logs
     depends_on:
       omop-db-postgress:
         condition: service_healthy

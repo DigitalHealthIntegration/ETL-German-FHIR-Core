@@ -3,7 +3,7 @@ import os
 import etl_utils
 import etl_constants
 
-def reset_etl(with_hapi=False,synthetic_data_dir=None,synthea=False,hapi=False,omop=False,vocab=None,all=False):
+def reset_etl(with_hapi=False,synthea=False,hapi=False,omop=False,vocab=None,all=False):
     if vocab:
         print("Reset VOCAB initiated...")
         etl_utils.remove_docker_containers("../../deploy/docker-compose-postgress.yml")
@@ -49,9 +49,9 @@ def reset_etl(with_hapi=False,synthetic_data_dir=None,synthea=False,hapi=False,o
     print(synthetic_data_dir)
     print(synthea)
 
-def run_etl(with_hapi=False,synthetic_data_dir=None,synthea=False,omop_version=None,incremental_load=False):
+def run_etl(hapi=False,synthetic_data_dir=None,synthea=False,vocab=None,incremental_load=False):
     print("Running ETL process...")
-    if with_hapi:
+    if hapi:
         print(incremental_load)
         print(f"With HAPI: {with_hapi}")
         etl_utils.run_docker_compose(".././hapi/docker-compose-hapi.yml")
@@ -71,7 +71,7 @@ def run_etl(with_hapi=False,synthetic_data_dir=None,synthea=False,omop_version=N
     elif synthea:
         print(f"Synthea: {synthea}")
         return
-    if omop_version:
+    if vocab:
         print(f"{omop_version}")
         verify_vocab_and_download(omop_version)   
         etl_utils.run_etl_pipeline()
@@ -95,14 +95,14 @@ def main():
 
     # Add arguments
     parser.add_argument('action', choices=['run','reset','set'], default='run', help='Action to perform')
-    parser.add_argument('--with-hapi', action='store_true', help='Setup HAPI image')
+    # parser.add_argument('--with-hapi', action='store_true', help='Setup HAPI image')
     parser.add_argument('--synthetic-data-dir', help='Directory containing synthetic data')
     parser.add_argument('--synthea', action='store_true', help='Pull Synthea and upload data to HAPI server')
     parser.add_argument('--hapi', action='store_true', help='Resets Hapi server')
     parser.add_argument('--vocab', help='Resets Vocab')
     parser.add_argument('--omop', action='store_true', help='Resets omop')
     parser.add_argument('--all', action='store_true', help='Resets all')
-    parser.add_argument('--omop-version', help='runs with defined version')
+    # parser.add_argument('--omop-version', help='runs with defined version')
     parser.add_argument('--with-synthea', action='store_true', help='Pull Synthea and upload data to HAPI server')
     parser.add_argument('--with-incremental-load', action='store_true', help='Pull Synthea and upload data to HAPI server')
     
@@ -120,10 +120,10 @@ def main():
                     vocab=args.vocab,
                     all=args.all    )
     elif args.action == 'run':
-        run_etl(with_hapi=args.with_hapi, 
+        run_etl(hapi=args.hapi, 
                 synthetic_data_dir=args.synthetic_data_dir, 
                 synthea=args.synthea,
-                omop_version=args.omop_version,
+                vocab=args.vocab,
                 incremental_load=args.with_incremental_load)
     elif args.action == 'set':
         set_etl(vocab = args.vocab,
@@ -145,6 +145,10 @@ def set_etl(vocab=None,hapi=False,synthea=False,synthetic_data_dir=None):
         if synthetic_data_dir:
             print(f"Synthetic Data Directory: {synthetic_data_dir}")
             etl_utils.upload_synthea_data_to_hapi(synthetic_data_dir)
+        return
+    if synthea:
+        etl_utils.run_docker_compose_with_logs(".././synthea/docker-compose.yml")
+
 
 def verify_vocab_and_download(vocab_version):
     print("Verifying the VOCAB")

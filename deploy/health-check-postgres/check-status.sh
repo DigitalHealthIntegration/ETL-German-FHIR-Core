@@ -7,4 +7,3 @@ else
     echo "Table does not exist, returning not healthy"
     exit 1
 fi
-
