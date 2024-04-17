@@ -469,7 +469,7 @@ public class PatientMapper implements FhirMapper<Patient> {
           "The String: {} is longer than allowed. Cut it to a length of {}.",
           stringToBeCut,
           maxLength);
-//      invalidStringLengthCounter.increment();
+      invalidStringLengthCounter.increment();
       return StringUtils.left(stringToBeCut, maxLength);
     }
     return stringToBeCut;
@@ -547,7 +547,7 @@ public class PatientMapper implements FhirMapper<Patient> {
         return documentationDateTime.minusDays(age);
       default:
         log.warn("Unable to calculate [Birthdate] for [Patient]: {}.", patientId);
-//        invalidBirthDateCounter.increment();
+        invalidBirthDateCounter.increment();
         return null;
     }
   }

@@ -1021,7 +1021,7 @@ public class ProcedureMapper implements FhirMapper<Procedure> {
 
     if (visitOccId == null) {
       log.debug("No matching [Encounter] found for [Procedure]: {}.", procedureId);
-//      noMatchingEncounterCounter.increment();
+      noMatchingEncounterCounter.increment();
     }
 
     return visitOccId;
