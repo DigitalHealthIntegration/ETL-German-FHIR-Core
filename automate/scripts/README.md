@@ -89,7 +89,7 @@ This python script automates ETL processess.
   6. Run ETL pipeline in Incremetal Load Mode.
       - Only to run ETL pipeline use:
            ```bash
-             python etl.py run
+             python etl.py run --with-incremental-load
            ```
 
   7. To check logs of ETL pipeline.
@@ -208,7 +208,7 @@ Run the script with the following command:
           python etl.py run --hapi --hapi --synthetic-data-dir <directory-path>
           ```
 
-  7. --incremental-load :
+  7. --with-incremental-load :
        - This option runs ETL pipeline in incremental load.
 
           ```bash
