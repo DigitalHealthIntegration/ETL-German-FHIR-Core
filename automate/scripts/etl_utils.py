@@ -5,7 +5,6 @@ import glob
 import os
 import boto3
 import zipfile
-import os
 import shutil
 import etl_constants
 import psycopg2
