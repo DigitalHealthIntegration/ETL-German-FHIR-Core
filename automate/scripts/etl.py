@@ -3,7 +3,7 @@ import os
 import etl_utils
 import etl_constants
 
-def reset_etl(with_hapi=False,synthea=False,hapi=False,omop=False,vocab=None,all=False):
+def reset_etl(synthea=False,hapi=False,omop=False,vocab=None,all=False):
     if vocab:
         print("Reset VOCAB initiated...")
         etl_utils.remove_docker_containers("../../deploy/docker-compose-postgress.yml")
@@ -36,8 +36,8 @@ def reset_etl(with_hapi=False,synthea=False,hapi=False,omop=False,vocab=None,all
         etl_utils.remove_folder("../../omop-vocab")
         etl_utils.delete_files_from_given_path(".././synthea/output/fhir")
         etl_utils.delete_files_from_given_path(".././synthea/output/metadata")
-        etl_utils.download_vocab_from_s3()
-        etl_utils.run_docker_compose(".././hapi/docker-compose-hapi.yml")
+        # etl_utils.download_vocab_from_s3()
+        #etl_utils.run_docker_compose(".././hapi/docker-compose-hapi.yml")
         print("Reset Everything completed...")
         return
     if synthea:
@@ -72,8 +72,8 @@ def run_etl(hapi=False,synthetic_data_dir=None,synthea=False,vocab=None,incremen
         print(f"Synthea: {synthea}")
         return
     if vocab:
-        print(f"{omop_version}")
-        verify_vocab_and_download(omop_version)   
+        print(f"{vocab}")
+        verify_vocab_and_download(vocab)   
         etl_utils.run_etl_pipeline()
         print(f"v = {current_version}")
         print(f"hash = {current_hash}")
@@ -84,7 +84,7 @@ def run_etl(hapi=False,synthetic_data_dir=None,synthea=False,vocab=None,incremen
         etl_utils.run_etl_pipeline()
         return
     print(f"Normal run")
-    print(omop_version)
+    print(vocab)
     etl_utils.update_dotenv_file('true')
     etl_utils.run_etl_pipeline()
     
@@ -112,10 +112,8 @@ def main():
 
     # Perform actions based on arguments
     if args.action == 'reset':
-        reset_etl(  with_hapi=args.with_hapi,
-                    synthetic_data_dir=args.synthetic_data_dir,
+        reset_etl(  hapi=args.hapi,
                     synthea=args.synthea,
-                    hapi=args.hapi,
                     omop=args.omop,
                     vocab=args.vocab,
                     all=args.all    )
@@ -132,7 +130,7 @@ def main():
         synthetic_data_dir=args.synthetic_data_dir)
 
 def set_etl(vocab=None,hapi=False,synthea=False,synthetic_data_dir=None):
-    print(synthea)
+
     if vocab:
         verify_vocab_and_download(vocab)
         return
