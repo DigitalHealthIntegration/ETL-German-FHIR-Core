@@ -6,7 +6,7 @@ boto3
 zipfile36
 shutils
 psycopg2
-jsonlib
+json5
 requests
 fhir.resources
 pathlib

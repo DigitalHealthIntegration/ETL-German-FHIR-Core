@@ -128,18 +128,18 @@ def main():
     elif args.action == 'set':
         set_etl(vocab = args.vocab,
         hapi=args.hapi,
-        synthea=args.with_synthea,
+        synthea=args.synthea,
         synthetic_data_dir=args.synthetic_data_dir)
 
 def set_etl(vocab=None,hapi=False,synthea=False,synthetic_data_dir=None):
+    print(synthea)
     if vocab:
         verify_vocab_and_download(vocab)
         return
     if hapi:
         etl_utils.run_docker_compose(".././hapi/docker-compose-hapi.yml")
-        print(synthea)
         if synthea:
-            etl_utils.run_docker_compose_with_logs(".././synthea/docker-compose.yml")
+            etl_utils.run_docker_compose_with_logs(".././synthea/docker-compose-synthea.yml")
             etl_utils.upload_synthea_data_to_hapi()
             print(f"Synthea: {synthea}")
         if synthetic_data_dir:
@@ -147,7 +147,7 @@ def set_etl(vocab=None,hapi=False,synthea=False,synthetic_data_dir=None):
             etl_utils.upload_synthea_data_to_hapi(synthetic_data_dir)
         return
     if synthea:
-        etl_utils.run_docker_compose_with_logs(".././synthea/docker-compose.yml")
+        etl_utils.run_docker_compose_with_logs(".././synthea/docker-compose-synthea.yml")
 
 
 def verify_vocab_and_download(vocab_version):

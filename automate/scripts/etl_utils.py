@@ -11,7 +11,6 @@ import psycopg2
 import json
 import time
 import requests
-from dotenv import set_key
 from fhir.resources.R4B.fhirtypesvalidators import bundle_validator
 from pathlib import Path
     
@@ -256,7 +255,7 @@ def download_hash_from_s3(folder_name):
     bucket_name = "demo-ocl-image-store"  # Replace with your S3 bucket name
     region_name = "us-east-1"
     try:
-        folder_path = f"C:\\IPRD\\MCP\\ETL-German-FHIR-Core\\{folder_name}"
+        folder_path = f"../../{folder_name}"
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
             print(f"Created folder: {folder_path}")
