@@ -8,7 +8,7 @@
 
     <!-- File Appender -->
     <appender name="FILE" class="ch.qos.logback.core.FileAppender">
-        <file>/home/logs/logfile.log</file>
+        <file>/home/logs/fullLogs.log</file>
         <append>false</append>
         <encoder>
             <pattern>%date %-5level [%thread] %logger{35} - %msg%n</pattern>
@@ -16,7 +16,7 @@
     </appender>
 
     <appender name="MARKER_FILE" class="ch.qos.logback.core.FileAppender">
-        <file>/home/logs/marker.log</file>
+        <file>/home/logs/summaryLogs.log</file>
         <append>false</append>
         <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
             <evaluator class="ch.qos.logback.classic.boolex.OnMarkerEvaluator">

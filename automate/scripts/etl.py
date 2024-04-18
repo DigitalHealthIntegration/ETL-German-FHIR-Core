@@ -1,7 +1,6 @@
 import argparse
 import os
 import etl_utils
-import etl_constants
 
 def reset_etl(synthea=False,hapi=False,omop=False,vocab=None,all=False):
     if vocab:
@@ -103,7 +102,7 @@ def main():
     parser.add_argument('--omop', action='store_true', help='Resets omop')
     parser.add_argument('--all', action='store_true', help='Resets all')
     # parser.add_argument('--omop-version', help='runs with defined version')
-    parser.add_argument('--with-synthea', action='store_true', help='Pull Synthea and upload data to HAPI server')
+    # parser.add_argument('--with-synthea', action='store_true', help='Pull Synthea and upload data to HAPI server')
     parser.add_argument('--with-incremental-load', action='store_true', help='Pull Synthea and upload data to HAPI server')
     
 

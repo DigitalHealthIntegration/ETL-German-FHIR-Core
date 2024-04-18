@@ -261,6 +261,7 @@ def download_hash_from_s3(folder_name):
             print(f"Created folder: {folder_path}")
         
         #download md5_hash.txt
+        print("Started downloading hash from S3")
         object_name = f"ocl/{folder_name}/md5_hash.txt"
         local_file_path_md5 = os.path.join(folder_path, "md5_hash.txt")
         download_from_s3(bucket_name, object_name, local_file_path_md5, region_name)
@@ -297,6 +298,7 @@ def download_latest_vocab_from_s3(folder_name):
             print(f"Created folder: {folder_path}")
 
         # Download omop-vocab.zip
+        print("Started Downloading VOCAB from S3")
         object_name = f"ocl/{folder_name}/omop-vocab.zip"
         local_file_path_vocab = f"../../{folder_name}/omop-vocab.zip"
         download_from_s3(bucket_name, object_name, local_file_path_vocab, region_name)
