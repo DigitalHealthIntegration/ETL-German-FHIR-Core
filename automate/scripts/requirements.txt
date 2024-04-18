@@ -1,0 +1,15 @@
+argparse
+docker
+subprocess
+glob
+os
+boto3
+zipfile
+shutil
+psycopg2
+json
+time
+requests
+dotenv
+fhir.resources
+pathlib
