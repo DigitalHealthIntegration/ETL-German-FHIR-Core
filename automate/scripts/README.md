@@ -13,18 +13,88 @@ This python script automates ETL processess
      ```bash
      git clone https://github.com/DigitalHealthIntegration/ETL-German-FHIR-Core.git
      ```
-  3. Navigate to the scripts directory:
+
+  4. Change directory to deploy. eg: cd deploy
+  5. Rename sample.env to .env
+  6. Modify the following properties in .env file as per your setup
+      ````
+      DATA_FHIRSERVER_BASEURL=http://localhost:8080/fhir 
+      DATA_FHIRSERVER_USERNAME=username
+      DATA_FHIRSERVER_PASSWORD=password
+      DATA_FHIRSERVER_TOKEN=token
+    
+      // Use begin date and end date to restrict the amount of data fetched. It's currently set to a default value of 
+      DATA_BEGINDATE=1800-01-01
+      DATA_ENDDATE=2099-12-31
+      ````
+  7. Run `docker network create cloudbuild` . The important part here is to make sure the omop conversion application is on the same network as the fhir server to detect it. Ignore if network already exists.
+  8. Navigate to the scripts directory:
      
      ```bash
      cd <path_to_project_dir>/automate/scripts
      ```
-  4. Install the required dependencies:
+  9. Install the required dependencies:
         
      ```bash
-     pip install -r requirements.txt
+     pip install -r requirements.txt  
      ```
+
+## Basic steps To Use
+
+  1. download and set Vocabulary:
+       - use
+           ```bash
+             python etl.py set --vocab 5.1
+           ```
+
+  2. set up Hapi server:
+       - use
+           ```bash
+             python etl.py set --hapi
+           ```
+
+  4. download synthetic data and upload data to Hapi server
+      - only to download synthetic data use
+           ```bash
+             python etl.py set --synthea
+           ```
+      
+      - to download synthetic data and upload it to the hapi use 
+           ```bash
+             python etl.py set --hapi --synthea
+           ```
+           
+      - to upload synthetic data present in some directory to the hapi use 
+           ```bash
+             python etl.py set --hapi --synthetic-data-dir <dir_path>
+           ```
+           
+            
+  5. Run ETL pipeline
+      - only to ETL pipeline use
+           ```bash
+             python etl.py run
+           ```
+      
+      - to run ETL pipeline with Hapi server and also download synthetic data in one command use
+           ```bash
+             python etl.py run --hapi --synthea
+           ```                 
+
+      - to run ETL pipeline with Hapi server and also use synthetic data preset in given directory 
+           ```bash
+             python etl.py run --hapi --synthetic-data-dir <dir_path>
+           ```
+
+  6. To check logs of ETL pipeline
      
-## Usage
+      - navigate to deploy/logs directory
+        
+      - open fulllogsfile to check full logs
+        
+      - open summarylogs to check summary
+     
+## Different Operations and Usage
 Run the script with the following command:
     
   ```bash
@@ -42,14 +112,14 @@ Run the script with the following command:
        - This argument resets the server database and vocabulary
 
           ```bash
-          python etl.py run [options]
+          python etl.py reset [options]
           ```
       
   3. set :
        - This argument used to set initial server and vocab
 
           ```bash
-          python etl.py run [options]
+          python etl.py set [options]
           ```
       
 ### Options
@@ -78,19 +148,19 @@ Run the script with the following command:
        - This option is used to reset Hapi server when used with reset argument
 
           ```bash
-          python etl.py run [options]
+          python etl.py reset --hapi
           ```
 
        - This option is used to set Hapi server when used with set argument
 
           ```bash
-          python etl.py set --vocab <vocab_version>
+          python etl.py set --hapi
           ```
 
        - This option is used to run ETL with Hapi server when used with run argument
 
           ```bash
-          python etl.py set --vocab <vocab_version>
+          python etl.py run --hapi
           ```          
 
   4. --all :
@@ -139,49 +209,3 @@ Run the script with the following command:
           python etl.py run --incremental-load
           ```
 
-## Steps To Use
-
-  1. download and set Vocabulary:
-       - use
-           ```bash
-             python etl.py set --vocab 5.1
-           ```
-
-  2. set up Hapi server:
-       - use
-           ```bash
-             python etl.py set --hapi
-           ```
-
-  4. download synthetic data and upload data to Hapi server
-      - only to download synthetic data use
-           ```bash
-             python etl.py set --synthea
-           ```
-      
-      - to download synthetic data and upload it to the hapi use 
-           ```bash
-             python etl.py set --hapi --synthea
-           ```
-           
-      - to upload synthetic data present in some directory to the hapi use 
-           ```bash
-             python etl.py set --hapi --synthetic-data-dir <dir_path>
-           ```
-           
-            
-4. Run ETL pipeline
-      - only to ETL pipeline use
-           ```bash
-             python etl.py run
-           ```
-      
-      - to run ETL pipeline with Hapi server and also download synthetic data in one command use
-           ```bash
-             python etl.py run --hapi --synthea
-           ```                 
-
-      - to run ETL pipeline with Hapi server and also use synthetic data preset in given directory 
-           ```bash
-             python etl.py run --hapi --synthetic-data-dir <dir_path>
-           ```  
