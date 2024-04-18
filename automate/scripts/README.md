@@ -139,6 +139,49 @@ Run the script with the following command:
           python etl.py run --incremental-load
           ```
 
+## Steps To Use
 
-          
+  1. download and set Vocabulary:
+       - use
+           ```bash
+             python etl.py set --vocab 5.1
+           ```
 
+  2. set up Hapi server:
+       - use
+           ```bash
+             python etl.py set --hapi
+           ```
+
+  4. download synthetic data and upload data to Hapi server
+      - only to download synthetic data use
+           ```bash
+             python etl.py set --synthea
+           ```
+      
+      - to download synthetic data and upload it to the hapi use 
+           ```bash
+             python etl.py set --hapi --synthea
+           ```
+           
+      - to upload synthetic data present in some directory to the hapi use 
+           ```bash
+             python etl.py set --hapi --synthetic-data-dir <dir_path>
+           ```
+           
+            
+4. Run ETL pipeline
+      - only to ETL pipeline use
+           ```bash
+             python etl.py run
+           ```
+      
+      - to run ETL pipeline with Hapi server and also download synthetic data in one command use
+           ```bash
+             python etl.py run --hapi --synthea
+           ```                 
+
+      - to run ETL pipeline with Hapi server and also use synthetic data preset in given directory 
+           ```bash
+             python etl.py run --hapi --synthetic-data-dir <dir_path>
+           ```  
