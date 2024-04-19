@@ -49,9 +49,4 @@ public interface VisitDetailRepository
   @Query(value = "SELECT * FROM visit_detail where fhir_logical_id = :fhirLogicalId limit 1",
           nativeQuery = true)
   VisitDetail getStartDateOfVisitByFhirLogicalId(@Param("fhirLogicalId") String fhirLogicalId);
-
-  @Transactional
-  @Modifying
-  @Query(value = "DELETE FROM visit_detail WHERE visit_detail_id NOT IN (select min(visit_detail_id) from cds_cdm.visit_detail where fhir_logical_id = :fhir_logical_id group by visit_detail_id)", nativeQuery = true)
-  void deleteEntriesByFhirLogicalId(@Param("fhir_logical_id") String fhirLogicalId);
 }

@@ -13,6 +13,7 @@ import org.miracum.etl.fhirtoomop.mapper.helpers.ResourceFhirReferenceUtils;
 import org.miracum.etl.fhirtoomop.model.OmopModelWrapper;
 import org.miracum.etl.fhirtoomop.model.omop.CareSite;
 import org.miracum.etl.fhirtoomop.repository.OmopRepository;
+import org.miracum.etl.fhirtoomop.repository.service.OrganizationServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -26,11 +27,12 @@ public class OrganizationMapper implements FhirMapper<Organization> {
     private final IFhirPath fhirPath;
     private final Boolean bulkload;
     private final DbMappings dbMappings;
-    private final OmopRepository repositories;
     @Autowired
     ResourceFhirReferenceUtils fhirReferenceUtils;
     @Autowired
     FindOmopConcepts findOmopConcepts;
+    @Autowired
+    OrganizationServiceImpl organizationService;
 
     private static final Counter noFhirReferenceCounter =
             MapperMetrics.setNoFhirReferenceCounter("stepProcessOrganization");
@@ -52,7 +54,6 @@ public class OrganizationMapper implements FhirMapper<Organization> {
         this.fhirPath = fhirPath;
         this.bulkload = bulkload;
         this.dbMappings = dbMappings;
-        this.repositories = repositories;
     }
 
     @Override
@@ -72,7 +73,7 @@ public class OrganizationMapper implements FhirMapper<Organization> {
         }
 
         if (bulkload.equals(Boolean.FALSE)){
-            repositories.getCareSiteRepository().deleteCareSiteByLogicalId(organizationLogicId);
+            organizationService.deleteExistingCareSiteByFhirLogicalId(organizationLogicId);
             if (isDeleted){
                 return null;
             }

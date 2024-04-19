@@ -102,7 +102,8 @@ public class EncounterDepartmentCaseMapper implements FhirMapper<Encounter> {
           ResourceFhirReferenceUtils referenceUtils,
           IFhirPath fhirPath,
           Boolean bulkload,
-          DbMappings dbMappings, OmopRepository repositories) {
+          DbMappings dbMappings,
+          OmopRepository repositories) {
     this.referenceUtils = referenceUtils;
     this.fhirPath = fhirPath;
 
@@ -729,7 +730,7 @@ public class EncounterDepartmentCaseMapper implements FhirMapper<Encounter> {
   private void deleteExistingVisitDetails(
       String departmentCaseLogicId, String departmentCaseLogicIdentifier) {
     if (!Strings.isNullOrEmpty(departmentCaseLogicId)) {
-      repositories.getVisitDetailRepository().deleteEntriesByFhirLogicalId(departmentCaseLogicId);
+      departmentCaseMapperService.deleteExistingDepartmentCaseByFhirLogicalId(departmentCaseLogicId);
     } else {
       departmentCaseMapperService.deleteExistingDepartmentcaseByIdentifier(
           departmentCaseLogicIdentifier);

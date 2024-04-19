@@ -588,8 +588,8 @@ public class TaskConfiguration {
         .next(stepProcessImmunization)
         .next(stepProcessConsent)
         .next(stepProcessDiagnosticReport)
-            .next(stepProcessPractitioners)
-            .next(stepProcessPractitionerRole)
+        .next(stepProcessPractitioners)
+        .next(stepProcessPractitionerRole)
         .build();
   }
 

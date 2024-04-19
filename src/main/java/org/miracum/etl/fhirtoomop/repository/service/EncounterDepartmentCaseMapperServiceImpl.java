@@ -56,4 +56,8 @@ public class EncounterDepartmentCaseMapperServiceImpl {
   public VisitDetail getVisitStartDateTimeByFhirLogicId(String fhirLogicalId){
     return visitDetailRepository.getStartDateOfVisitByFhirLogicalId(fhirLogicalId);
   }
+
+  public void deleteExistingDepartmentCaseByFhirLogicalId(String fhirLogicalId) {
+    visitDetailRepository.deleteByFhirLogicalId(fhirLogicalId);
+  }
 }

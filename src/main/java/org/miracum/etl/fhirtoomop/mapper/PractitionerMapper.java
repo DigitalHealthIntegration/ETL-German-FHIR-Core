@@ -8,6 +8,7 @@ import org.miracum.etl.fhirtoomop.mapper.helpers.ResourceFhirReferenceUtils;
 import org.miracum.etl.fhirtoomop.model.OmopModelWrapper;
 import org.miracum.etl.fhirtoomop.model.omop.Provider;
 import org.miracum.etl.fhirtoomop.repository.OmopRepository;
+import org.miracum.etl.fhirtoomop.repository.service.PractitionerMapperServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -28,9 +29,11 @@ public class PractitionerMapper implements FhirMapper<Practitioner> {
 
     private final Boolean bulkload;
     private final DbMappings dbMappings;
-    private final OmopRepository repositories;
     @Autowired
     ResourceFhirReferenceUtils fhirReferenceUtils;
+    @Autowired
+    PractitionerMapperServiceImpl practitionerMapperService;
+
     /**
      * Constructs a new {@code PractitionerMapper} with the specified bulkload flag and database mappings.
      *
@@ -41,7 +44,6 @@ public class PractitionerMapper implements FhirMapper<Practitioner> {
     public PractitionerMapper(Boolean bulkload, DbMappings dbMappings, OmopRepository repositories) {
         this.bulkload = bulkload;
         this.dbMappings = dbMappings;
-        this.repositories = repositories;
     }
 
     /**
@@ -57,7 +59,7 @@ public class PractitionerMapper implements FhirMapper<Practitioner> {
         Random random = new Random();
         var practitionerId = fhirReferenceUtils.extractId(resource);
         if (bulkload.equals(Boolean.FALSE)){
-            repositories.getProviderRepository().deleteProviderByLogicId(practitionerId);
+            practitionerMapperService.deleteExistingProviderByFhirLogicalId(practitionerId);
             if (isDeleted){
                 return null;
             }
