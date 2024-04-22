@@ -14,9 +14,9 @@ This python script automates ETL processess.
      git clone https://github.com/DigitalHealthIntegration/ETL-German-FHIR-Core.git
      ```
 
-  4. Change directory to deploy. eg: cd deploy.
-  5. Rename sample.env to .env.
-  6. Modify the following properties in .env file as per your setup.
+  3. Change directory to deploy. eg: cd deploy.
+  4. Rename sample.env to .env.
+  5. Modify the following properties in .env file as per your setup.
       ````
       DATA_FHIRSERVER_BASEURL=http://localhost:8080/fhir 
       DATA_FHIRSERVER_USERNAME=username
@@ -27,13 +27,13 @@ This python script automates ETL processess.
       DATA_BEGINDATE=1800-01-01
       DATA_ENDDATE=2099-12-31
       ````
-  7. Run `docker network create cloudbuild` . The important part here is to make sure the omop conversion application is on the same network as the fhir server to detect it. Ignore if network already exists.
-  8. Navigate to the scripts directory:
+  6. Run `docker network create cloudbuild` . The important part here is to make sure the omop conversion application is on the same network as the fhir server to detect it. Ignore if network already exists.
+  7. Navigate to the scripts directory:
      
      ```bash
      cd <path_to_project_dir>/automate/scripts
      ```
-  9. Install the required dependencies:
+  8. Install the required dependencies:
         
      ```bash
      pip install -r requirements.txt  
@@ -53,7 +53,7 @@ This python script automates ETL processess.
              python etl.py set --hapi
            ```
 
-  4. Download synthetic data and upload data to Hapi server
+  3. Download synthetic data and upload data to Hapi server
       - Only to download synthetic data use:
            ```bash
              python etl.py set --synthea
@@ -70,7 +70,7 @@ This python script automates ETL processess.
            ```
            
             
-  5. Run ETL pipeline in Bulk Load Mode.
+  4. Run ETL pipeline in Bulk Load Mode.
       - Only to run ETL pipeline use:
            ```bash
              python etl.py run
@@ -86,13 +86,13 @@ This python script automates ETL processess.
              python etl.py run --hapi --synthetic-data-dir <dir_path>
            ```
            
-  6. Run ETL pipeline in Incremetal Load Mode.
+  5. Run ETL pipeline in Incremetal Load Mode.
       - Only to run ETL pipeline use:
            ```bash
              python etl.py run --with-incremental-load
            ```
 
-  7. To check logs of ETL pipeline.
+  6. To check logs of ETL pipeline.
      
       - Navigate to `deploy/logs` directory.
         
