@@ -288,10 +288,10 @@ public class ResourceOmopReferenceUtils {
         getExistingVisitOccId(encounterReferenceLogicalId, encounterReferenceIdentifier);
     if (existingVisitOccId == null && bulkload.equals(Boolean.FALSE)) {
       // TODO: use JPA instead of JDBCTemplate
-      readerTemplate.update(
-          String.format("UPDATE %s SET last_updated_at=? WHERE fhir_id=?", inputTableName),
-          LocalDateTime.now().plusDays(1),
-          resourceId.substring(4));
+//      readerTemplate.update(
+//          String.format("UPDATE %s SET last_updated_at=? WHERE fhir_id=?", inputTableName),
+//          LocalDateTime.now().plusDays(1),
+//          resourceId.substring(4));
       log.warn(
           "No [visit_occurrence] found for {}. This resource will be processed again tomorrow.",
           resourceId);
