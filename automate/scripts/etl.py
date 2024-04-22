@@ -7,9 +7,8 @@ def reset_etl(synthea=False,hapi=False,omop=False,vocab=None,all=False):
         print("Reset VOCAB initiated...")
         etl_utils.remove_docker_containers("../../deploy/docker-compose-postgress.yml")
         etl_utils.remove_docker_containers("../../deploy/docker-compose-etl.yml")
-        etl_utils.remove_docker_volume(etl_constants.omop_postgress_volume_name)
+        etl_utils.remove_docker_volume(OMOP_POSTGRESS_VOLUME_NAME)
         verify_vocab_and_download(vocab)
-        # etl_utils.run_docker_compose("../../deploy/docker-compose-postgress.yml")
         print("Reset VOCAB completed...")
         return
     if omop:
@@ -21,7 +20,7 @@ def reset_etl(synthea=False,hapi=False,omop=False,vocab=None,all=False):
         print("Reset HAPI initiated...")
         etl_utils.truncate_omop_tables()
         etl_utils.remove_docker_containers(".././hapi/docker-compose-hapi.yml")
-        etl_utils.remove_docker_volume(etl_constants.hapi_db_volume_name)
+        etl_utils.remove_docker_volume(HAPI_DB_VOLUME_NAME)
         print("Reset HAPI completed...")
         return
     if all:
@@ -30,13 +29,11 @@ def reset_etl(synthea=False,hapi=False,omop=False,vocab=None,all=False):
         etl_utils.remove_docker_containers("../../deploy/docker-compose-etl.yml")
         etl_utils.remove_docker_containers(".././hapi/docker-compose-hapi.yml")
         etl_utils.remove_docker_containers(".././synthea/docker-compose-synthea.yml")
-        etl_utils.remove_docker_volume(etl_constants.omop_postgress_volume_name)
-        etl_utils.remove_docker_volume(etl_constants.hapi_db_volume_name)
+        etl_utils.remove_docker_volume(OMOP_POSTGRESS_VOLUME_NAME)
+        etl_utils.remove_docker_volume(HAPI_DB_VOLUME_NAME)
         etl_utils.remove_folder("../../omop-vocab")
         etl_utils.delete_files_from_given_path(".././synthea/output/fhir")
         etl_utils.delete_files_from_given_path(".././synthea/output/metadata")
-        # etl_utils.download_vocab_from_s3()
-        #etl_utils.run_docker_compose(".././hapi/docker-compose-hapi.yml")
         print("Reset Everything completed...")
         return
     if synthea:
@@ -94,21 +91,18 @@ def main():
 
     # Add arguments
     parser.add_argument('action', choices=['run','reset','set'], default='run', help='Action to perform')
-    # parser.add_argument('--with-hapi', action='store_true', help='Setup HAPI image')
     parser.add_argument('--synthetic-data-dir', help='Directory containing synthetic data')
     parser.add_argument('--synthea', action='store_true', help='Pull Synthea and upload data to HAPI server')
     parser.add_argument('--hapi', action='store_true', help='Resets Hapi server')
     parser.add_argument('--vocab', help='Resets Vocab')
     parser.add_argument('--omop', action='store_true', help='Resets omop')
     parser.add_argument('--all', action='store_true', help='Resets all')
-    # parser.add_argument('--omop-version', help='runs with defined version')
-    # parser.add_argument('--with-synthea', action='store_true', help='Pull Synthea and upload data to HAPI server')
     parser.add_argument('--with-incremental-load', action='store_true', help='Pull Synthea and upload data to HAPI server')
     
 
     # Parse the command-line arguments
     args = parser.parse_args()
-
+    etl_utils.load_env_file()
     # Perform actions based on arguments
     if args.action == 'reset':
         reset_etl(  hapi=args.hapi,
@@ -152,7 +146,7 @@ def verify_vocab_and_download(vocab_version):
     current_version, current_hash = etl_utils.read_version_and_md5_hash_from_json("../../latest_version_hash.json")
     if current_version == vocab_version:
         download_hash_file = etl_utils.download_hash_from_s3(vocab_version)
-        hash_from_s3 = etl_utils.read_file(os.path.join(etl_constants.current_directory,f"{vocab_version}/md5_hash.txt"))
+        hash_from_s3 = etl_utils.read_file(f"../../{vocab_version}/md5_hash.txt")
         if current_hash == hash_from_s3:
             print("all ok")
         else:
@@ -175,3 +169,6 @@ def verify_vocab_and_download(vocab_version):
 
 if __name__ == "__main__":
     main()
+
+OMOP_POSTGRESS_VOLUME_NAME = "fhir-to-omop_omop-postgress"
+HAPI_DB_VOLUME_NAME = "hapi_hapi-fhir-postgres"

@@ -13,6 +13,7 @@ import time
 import requests
 from fhir.resources.R4B.fhirtypesvalidators import bundle_validator
 from pathlib import Path
+from dotenv import load_dotenv
     
 def run_docker_compose(yaml_path):
     try:
@@ -52,12 +53,6 @@ def remove_docker_volume(volume_name):
             print(f"Error: Docker volume '{volume_name}' not found.")
     except docker.errors.APIError as e:
         print(f"Error removing Docker volume '{volume_name}': {e}")
-    # try:
-    #     # Run Docker volume removal command in CMD
-    #     subprocess.run(f'docker volume rm "{volume_name}"', check=True)
-    #     print("Docker volume removed successfully.")
-    # except subprocess.CalledProcessError as e:
-    #     print("Error removing Docker volume:", e)
 
 def validate_file_for_fhir(file_path):
     try: 
@@ -79,7 +74,7 @@ def validate_file_for_fhir(file_path):
 
 def process_and_upload_file(file_path):
     #fhir server endpoint
-    URL = "http://localhost:8080/fhir/"
+    URL = os.getenv("FHIR_SERVER_URL")
 
     #fhir server json header content
     headers = {"Content-Type": "application/fhir+json;charset=utf-8"}
@@ -93,7 +88,7 @@ def process_and_upload_file(file_path):
                 if r.status_code == requests.codes.ok:  # Check if the response is successful
                     print("Response uploaded successfully.")
                     print("Response Content:")
-                    # print(r.text)  # Print the full response content
+                    print(r.text)  # Print the full response content
                     # Output file name that was processed
                     print("Processed File:", file_path)
                         
@@ -104,6 +99,11 @@ def process_and_upload_file(file_path):
                         
     else:
         print("File contains invalid Resources")
+
+def process_files_with_pattern(full_path, pattern):
+    files = glob.glob(os.path.join(full_path,pattern))
+    for file_path in files:
+        process_and_upload_file(file_path)
 
 def upload_synthea_data_to_hapi(file_path = ".././synthea/output/fhir"):
     
@@ -119,18 +119,8 @@ def upload_synthea_data_to_hapi(file_path = ".././synthea/output/fhir"):
     # full_path = os.path.join(script_directory, relative_path)
 
     for dirpath, dirnames, files in os.walk(full_path):
-
-        pattern = os.path.join(full_path, "hospitalInformation*.json")
-        hospital_files = glob.glob(pattern)
-
-        for file_path in hospital_files:
-            process_and_upload_file(file_path)
-
-        pattern = os.path.join(full_path, "practitionerInformation*.json")
-        practitioner_files = glob.glob(pattern)
-
-        for file_path in practitioner_files:
-            process_and_upload_file(file_path)
+        process_files_with_pattern(full_path, HOSPITAL_FILE_NAME)
+        process_files_with_pattern(full_path, PRACTITIONER_FILE_NAME)
 
         for file_name in files:
             file_path = os.path.join(full_path, file_name)
@@ -152,30 +142,8 @@ def delete_files_from_given_path(folder_path):
     except Exception as e:
         print(f"Error deleting files: {e}")
 
-# def download_vocab_from_s3():
-#     bucket_name = "demo-ocl-image-store"  # Replace with your S3 bucket name
-#     object_name = "ocl/omop-vocab.zip"  # Replace with the object (file) path in the bucket
-#     local_file_path = "C:\\IPRD\\MCP\\ETL-German-FHIR-Core\\omop-vocab.zip"  # Replace with the local file path where you want to save the downloaded file
-#     region_name = "us-east-1"
-#     try:
-#         # Initialize the S3 client
-#         print("downloading...")
-#         s3 = boto3.client('s3',aws_access_key_id='',aws_secret_access_key='', region_name = etl_constants.region_name)
-#         s3._request_signer.sign = (lambda *args, **kwargs: None)
-#         # Download the file from S3
-#         s3.download_file(bucket_name, object_name, local_file_path)
-#         print(f"File '{object_name}' downloaded from bucket '{bucket_name}' to '{local_file_path}'")
-#         with zipfile.ZipFile(local_file_path, 'r') as zip_ref:
-#             print("extracting....")
-#             zip_ref.extractall(os.path.dirname(local_file_path))
-        
-#         print(f"File '{local_file_path}' unzipped successfully.")
-#     except Exception as e:
-#         print(f"Error downloading or unzipping file from S3: {e}")
-
 
 def remove_folder(folder_path):
-    # absolute_folder_path = os.path.join(etl_constants.current_directory,folder_path)
     if os.path.exists(folder_path):
         try:
             shutil.rmtree(folder_path)
@@ -186,12 +154,21 @@ def remove_folder(folder_path):
         print(f"Error: Folder '{folder_path}' does not exist.")
 
 def connect_to_database():
+    
+
+    # Retrieve database connection parameters from the environment
+    db_user = os.getenv("DB_USER")
+    db_password = os.getenv("DB_PASSWORD")
+    db_host = os.getenv("DB_HOST")
+    db_port = os.getenv("DB_PORT")
+    db_name = os.getenv("DB_NAME")
+
     try:
-        connection = psycopg2.connect(user="ohdsi_admin_user",
-                                          password="admin1",
-                                          host="localhost",
-                                          port="5412",
-                                          database="ohdsi")
+        connection = psycopg2.connect(user=db_user,
+                                          password=db_password,
+                                          host=db_host,
+                                          port=db_port,
+                                          database=db_name)
         print("connected to database")
         return connection
     except (Exception, psycopg2.Error) as error:
@@ -240,7 +217,6 @@ def truncate_tables(connection, tables):
         print("Error trauncating tables:", error)
 
 def read_version_and_md5_hash_from_json(file_path):
-    # local_file_path = os.path.join(etl_constants.current_directory, file_path)
     try:
         with open(file_path, 'r') as json_file:
             data = json.load(json_file)
@@ -252,8 +228,8 @@ def read_version_and_md5_hash_from_json(file_path):
         return None, None
 
 def download_hash_from_s3(folder_name):
-    bucket_name = "demo-ocl-image-store"  # Replace with your S3 bucket name
-    region_name = "us-east-1"
+    bucket_name = S3_BUCKET_NAME # Replace with your S3 bucket name
+    region_name = S3_REGION_NAME
     try:
         folder_path = f"../../{folder_name}"
         if not os.path.exists(folder_path):
@@ -267,6 +243,7 @@ def download_hash_from_s3(folder_name):
         download_from_s3(bucket_name, object_name, local_file_path_md5, region_name)
     except Exception as e:
         print(f"Error downloading files from S3: {e}")
+
 
 def read_file(file_path):
     try:
@@ -289,8 +266,8 @@ def download_from_s3(bucket_name, object_name, local_file_path, region_name):
         print(f"Error downloading file from S3: {e}")
 
 def download_latest_vocab_from_s3(folder_name):
-    bucket_name = "demo-ocl-image-store"  # Replace with your S3 bucket name
-    region_name = "us-east-1"
+    bucket_name = S3_BUCKET_NAME  # Replace with your S3 bucket name
+    region_name = S3_REGION_NAME
     try:   
         folder_path = f"../../{folder_name}"
         if not os.path.exists(folder_path):
@@ -306,7 +283,6 @@ def download_latest_vocab_from_s3(folder_name):
         print(f"Error downloading files from S3: {e}")
 
 def update_json_file(version, md5_hash, file_path):
-    # local_file_path = os.path.join(etl_constants.current_directory,file_path)
     try:
         # Read existing JSON data
         with open(file_path, 'r') as json_file:
@@ -341,55 +317,55 @@ def calculate_retry_delay(attempt):
         return 60  # After 5 attempts, wait for 60 seconds
 
 
-# def extract_logs(input_file, output_file):
-#     try:
-#         with open(input_file, 'r') as f:
-#             lines = f.readlines()
+def extract_logs(input_file, output_file):
+    try:
+        with open(input_file, 'r') as f:
+            lines = f.readlines()
 
-#         start_marker = "==== Summary ===="
-#         end_marker = "==== Job End ===="
+        start_marker = "==== Summary ===="
+        end_marker = "==== Job End ===="
 
-#         start_index = None
-#         end_index = None
+        start_index = None
+        end_index = None
 
-#         for i, line in enumerate(lines):
-#             if start_marker in line:
-#                 start_index = i
-#             elif end_marker in line:
-#                 end_index = i
-#                 break
+        for i, line in enumerate(lines):
+            if start_marker in line:
+                start_index = i
+            elif end_marker in line:
+                end_index = i
+                break
 
-#         if start_index is not None and end_index is not None:
-#             extracted_lines = []
+        if start_index is not None and end_index is not None:
+            extracted_lines = []
 
-#             for line in lines[start_index:end_index + 1]:
-#                 parts = line.split("FhirToOmopJobListener", 1)
-#                 if len(parts) > 1:
-#                     cleaned_line = parts[1].strip()
-#                     extracted_lines.append(cleaned_line + '\n')
+            for line in lines[start_index:end_index + 1]:
+                parts = line.split("FhirToOmopJobListener", 1)
+                if len(parts) > 1:
+                    cleaned_line = parts[1].strip()
+                    extracted_lines.append(cleaned_line + '\n')
 
-#             with open(output_file, 'w') as f:
-#                 f.writelines(extracted_lines)
+            with open(output_file, 'w') as f:
+                f.writelines(extracted_lines)
             
-#             print(f"Extracted logs and saved to '{output_file}'")
-#         else:
-#             print("Start or end marker not found.")
+            print(f"Extracted logs and saved to '{output_file}'")
+        else:
+            print("Start or end marker not found.")
 
-#     except Exception as e:
-#         print(f"Error extracting logs: {e}")
+    except Exception as e:
+        print(f"Error extracting logs: {e}")
 
-# def download_container_logs(yaml_path):
-#     try:
-#         # Run Docker Compose command in CMD
-#         with subprocess.Popen(f'docker-compose -f "{yaml_path}" logs ohdsi-germany > .././etl_report/full_report.txt', shell=True) as process:
-#             process.wait()  # Wait for the process to complete
-#         print("Docker logs downloaded ")
-#     except subprocess.CalledProcessError as e:
-#         print("Error running Docker Compose command:", e)
-#     except KeyboardInterrupt:
-#         print("Process interrupted by the user.")
-#         # Perform any necessary cleanup here
-#         raise
+def download_container_logs(yaml_path):
+    try:
+        # Run Docker Compose command in CMD
+        with subprocess.Popen(f'docker-compose -f "{yaml_path}" logs ohdsi-germany > .././etl_report/full_report.txt', shell=True) as process:
+            process.wait()  # Wait for the process to complete
+        print("Docker logs downloaded ")
+    except subprocess.CalledProcessError as e:
+        print("Error running Docker Compose command:", e)
+    except KeyboardInterrupt:
+        print("Process interrupted by the user.")
+        # Perform any necessary cleanup here
+        raise
 
 def run_etl_pipeline():
     connection = None
@@ -413,28 +389,42 @@ def run_etl_pipeline():
         print("database connection closed")
 
 def update_dotenv_file(value):
-   # Define the path to your .env file
-    env_file_path = '../../deploy/.env'
+    try:
+        # Define the path to your .env file
+        env_file_path = '../../deploy/.env'
 
-    # Define the variable you want to update
-    variable_to_update = 'APP_BULKLOAD_ENABLED'
+        # Define the variable you want to update
+        variable_to_update = 'APP_BULKLOAD_ENABLED'
 
-    # Define the new value
-    new_value = value
+        # Define the new value
+        new_value = value
 
-    # Read the contents of the .env file
-    with open(env_file_path, 'r') as file:
-        lines = file.readlines()
+        # Read the contents of the .env file
+        with open(env_file_path, 'r') as file:
+            lines = file.readlines()
 
-    # Update the value if the variable is found
-    updated_lines = []
-    for line in lines:
-        if line.strip().startswith(variable_to_update + '='):
-            line = f"{variable_to_update}={new_value}\n"
-        updated_lines.append(line)
+        # Update the value if the variable is found
+        updated_lines = []
+        for line in lines:
+            if line.strip().startswith(variable_to_update + '='):
+                line = f"{variable_to_update}={new_value}\n"
+            updated_lines.append(line)
 
-    # Write the updated contents back to the .env file
-    with open(env_file_path, 'w') as file:
-        file.writelines(updated_lines)
+        # Write the updated contents back to the .env file
+        with open(env_file_path, 'w') as file:
+            file.writelines(updated_lines)
 
-    print(f"Updated {variable_to_update} to {new_value} in {env_file_path}")
+        print(f"Updated {variable_to_update} to {new_value} in {env_file_path}")
+
+    except FileNotFoundError:
+        print(f"Error: The file {env_file_path} was not found.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+def load_env_file():
+    load_dotenv()
+
+HOSPITAL_FILE_NAME = "hospitalInformation*.json"
+PRACTITIONER_FILE_NAME = "practitionerInformation*.json"
+S3_BUCKET_NAME = "demo-ocl-image-store"
+S3_REGION_NAME = "us-east-1"

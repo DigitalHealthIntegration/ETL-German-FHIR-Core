@@ -24,7 +24,6 @@ class TestRunDockerCompose(unittest.TestCase):
         containers = docker_client.containers.list()
         self.assertTrue(containers)  # Assert that there are containers running
         for container in containers:
-            print(f"container status {container.status}")
             self.assertEqual(container.status, "exited")  # Assert that each container is running
     
     @patch('sys.stdout', new_callable=StringIO)
