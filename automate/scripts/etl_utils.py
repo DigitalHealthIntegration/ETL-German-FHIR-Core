@@ -227,23 +227,28 @@ def read_version_and_md5_hash_from_json(file_path):
         print(f"Error reading version and MD5 hash from JSON file: {e}")
         return None, None
 
-def download_hash_from_s3(folder_name):
+def download_file_from_s3(folder_name, object_name, local_file_name):
     bucket_name = S3_BUCKET_NAME # Replace with your S3 bucket name
     region_name = S3_REGION_NAME
+
     try:
         folder_path = f"../../{folder_name}"
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
             print(f"Created folder: {folder_path}")
-        
-        #download md5_hash.txt
-        print("Started downloading hash from S3")
-        object_name = f"ocl/{folder_name}/md5_hash.txt"
-        local_file_path_md5 = os.path.join(folder_path, "md5_hash.txt")
-        download_from_s3(bucket_name, object_name, local_file_path_md5, region_name)
+        # Construct local file path
+        local_file_path = os.path.join(folder_path, local_file_name)
+
+        print(f"Started downloading {local_file_name} from S3")
+        download_from_s3(bucket_name, object_name, local_file_path, region_name)
     except Exception as e:
         print(f"Error downloading files from S3: {e}")
 
+
+
+def download_hash_from_s3(folder_name):
+    object_name = f"ocl/{folder_name}/md5_hash.txt"
+    download_file_from_s3(bucket_name, object_name, local_file_path_md5, region_name)
 
 def read_file(file_path):
     try:
@@ -266,21 +271,8 @@ def download_from_s3(bucket_name, object_name, local_file_path, region_name):
         print(f"Error downloading file from S3: {e}")
 
 def download_latest_vocab_from_s3(folder_name):
-    bucket_name = S3_BUCKET_NAME  # Replace with your S3 bucket name
-    region_name = S3_REGION_NAME
-    try:   
-        folder_path = f"../../{folder_name}"
-        if not os.path.exists(folder_path):
-            os.makedirs(folder_path)
-            print(f"Created folder: {folder_path}")
-
-        # Download omop-vocab.zip
-        print("Started Downloading VOCAB from S3")
-        object_name = f"ocl/{folder_name}/omop-vocab.zip"
-        local_file_path_vocab = f"../../{folder_name}/omop-vocab.zip"
-        download_from_s3(bucket_name, object_name, local_file_path_vocab, region_name)
-    except Exception as e:
-        print(f"Error downloading files from S3: {e}")
+    object_name = f"ocl/{folder_name}/omop-vocab.zip"
+    download_file_from_s3(folder_name, object_name, "omop-vocab.zip")
 
 def update_json_file(version, md5_hash, file_path):
     try:
