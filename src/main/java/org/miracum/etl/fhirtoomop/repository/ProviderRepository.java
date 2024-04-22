@@ -16,9 +16,10 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Repository
 public interface ProviderRepository extends PagingAndSortingRepository<Provider, Long>, JpaRepository<Provider, Long> {
-
-        @Transactional
-        @Modifying
-        @Query(value = "DELETE FROM provider WHERE fhir_logical_id = :fhir_logical_id", nativeQuery = true)
-        void deleteProviderByLogicId(@Param("fhir_logical_id") String fhirLogicalId);
+        /**
+         * Delete entries in OMOP CDM table using fhir_logical_id.
+         *
+         * @param fhirLogicalId logical id of the FHIR resource
+         */
+        void deleteByFhirLogicalId(String fhirLogicalId);
 }

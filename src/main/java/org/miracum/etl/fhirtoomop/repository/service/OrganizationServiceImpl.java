@@ -17,6 +17,6 @@ public class OrganizationServiceImpl {
     @Autowired CareSiteRepository careSiteRepository;
 
     public void deleteExistingCareSiteByFhirLogicalId(String fhirLogicalId){
-        careSiteRepository.deleteCareSiteByLogicalId(fhirLogicalId);
+        careSiteRepository.deleteByFhirLogicalId(fhirLogicalId);
     }
 }

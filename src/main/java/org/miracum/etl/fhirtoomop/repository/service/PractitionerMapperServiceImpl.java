@@ -17,6 +17,6 @@ public class PractitionerMapperServiceImpl {
     @Autowired ProviderRepository providerRepository;
 
     public void deleteExistingProviderByFhirLogicalId(String fhirLogicalId){
-        providerRepository.deleteProviderByLogicId(fhirLogicalId);
+        providerRepository.deleteByFhirLogicalId(fhirLogicalId);
     }
 }

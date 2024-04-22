@@ -40,23 +40,23 @@ public class OrganizationStepListener implements StepExecutionListener {
         if (bulkload.equals(Boolean.TRUE)) {
             log.info("========= Preparing OMOP DB for BulkLoad =========");
             truncateDb();
-            dbMappings
-                    .getOmopConceptMapWrapper()
-                    .setFindValidSnomedConcept(
-                            repositories.getConceptRepository().findValidConceptId(VOCABULARY_SNOMED));
-            dbMappings.setFindSnomedRaceStandardMapping(
-                    repositories.getSnomedRaceRepository().getSnomedRaceMap());
-            dbMappings
-                    .getOmopConceptMapWrapper()
-                    .setFindValidIPRDConcept(
-                            repositories.getConceptRepository().findValidConceptId(VOCABULARY_IPRD));
-            dbMappings.getOmopConceptMapWrapper().setFindValidWHOConcept(
-                    repositories.getConceptRepository().findValidConceptId(VOCABULARY_WHO)
-            );
         } else {
             log.info("========= Preparing OMOP DB for IncrementalLoad =========");
             cleanUpTable();
         }
+        dbMappings
+                .getOmopConceptMapWrapper()
+                .setFindValidSnomedConcept(
+                        repositories.getConceptRepository().findValidConceptId(VOCABULARY_SNOMED));
+        dbMappings.setFindSnomedRaceStandardMapping(
+                repositories.getSnomedRaceRepository().getSnomedRaceMap());
+        dbMappings
+                .getOmopConceptMapWrapper()
+                .setFindValidIPRDConcept(
+                        repositories.getConceptRepository().findValidConceptId(VOCABULARY_IPRD));
+        dbMappings.getOmopConceptMapWrapper().setFindValidWHOConcept(
+                repositories.getConceptRepository().findValidConceptId(VOCABULARY_WHO)
+        );
         dbMappings.setFindCareSiteId(repositories.getCareSiteRepository().careSitesMap());
         dbMappings.setFindHardCodeConcept(
                 repositories.getSourceToConceptRepository().sourceToConceptMap());

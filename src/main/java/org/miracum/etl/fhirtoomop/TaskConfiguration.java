@@ -563,33 +563,33 @@ public class TaskConfiguration {
    */
   @Bean
   public Flow incrementalLoadFlow(
-      Step stepProcessPatients,
-      Step stepProcessOrganization,
-      Step stepProcessEncounterInstitutionContact,
-      Step stepProcessConditions,
-      Step stepProcessObservations,
-      Step stepProcessProcedures,
-      Step stepEncounterDepartmentCase,
-      Step stepProcessImmunization,
-      Step stepProcessConsent,
-      Step stepProcessDiagnosticReport,
-      Step stepProcessPractitioners,
-      Step stepProcessPractitionerRole,
-      Flow medicationStepsFlow) {
+          Step stepProcessPatients,
+          Step stepProcessOrganization,
+          Step stepProcessPractitioners,
+          Step stepProcessEncounterInstitutionContact,
+          Step stepProcessConditions,
+          Step stepProcessObservations,
+          Step stepProcessProcedures,
+          Step stepEncounterDepartmentCase,
+          Step stepProcessImmunization,
+          Step stepProcessConsent,
+          Step stepProcessDiagnosticReport,
+          Flow medicationStepsFlow,
+          Step stepProcessPractitionerRole) {
     return new FlowBuilder<SimpleFlow>("incrementalLoad")
-        .start(stepProcessPatients)
-        .next(stepProcessOrganization)
-        .next(stepProcessEncounterInstitutionContact)
-        .next(stepEncounterDepartmentCase)
-        .next(medicationStepsFlow)
-        .next(stepProcessConditions)
-        .next(stepProcessObservations)
-        .next(stepProcessProcedures)
-        .next(stepProcessImmunization)
-        .next(stepProcessConsent)
-        .next(stepProcessDiagnosticReport)
-        .next(stepProcessPractitioners)
-        .next(stepProcessPractitionerRole)
+            .start(stepProcessOrganization)
+            .next(stepProcessPractitionerRole)
+            .next(stepProcessPractitioners)
+            .next(stepProcessPatients)
+            .next(stepProcessEncounterInstitutionContact)
+            .next(stepEncounterDepartmentCase)
+            .next(medicationStepsFlow)
+            .next(stepProcessConditions)
+            .next(stepProcessObservations)
+            .next(stepProcessProcedures)
+            .next(stepProcessImmunization)
+            .next(stepProcessConsent)
+            .next(stepProcessDiagnosticReport)
         .build();
   }
 

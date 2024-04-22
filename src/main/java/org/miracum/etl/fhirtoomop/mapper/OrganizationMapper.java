@@ -46,10 +46,9 @@ public class OrganizationMapper implements FhirMapper<Organization> {
      * @param bulkload     parameter which indicates whether the Job should be run as bulk load or
      *                     incremental load
      * @param dbMappings   collections for the intermediate storage of data from OMOP CDM in RAM
-     * @param repositories
      */
     @Autowired
-    public OrganizationMapper(IFhirPath fhirPath, Boolean bulkload, DbMappings dbMappings, OmopRepository repositories) {
+    public OrganizationMapper(IFhirPath fhirPath, Boolean bulkload, DbMappings dbMappings) {
 
         this.fhirPath = fhirPath;
         this.bulkload = bulkload;

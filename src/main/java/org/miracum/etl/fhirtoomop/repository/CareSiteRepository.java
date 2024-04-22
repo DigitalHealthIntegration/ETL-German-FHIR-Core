@@ -41,8 +41,10 @@ public interface CareSiteRepository extends PagingAndSortingRepository<CareSite,
   @Query(value = "TRUNCATE TABLE care_site CASCADE", nativeQuery = true)
   void truncateTable();
 
-  @Transactional
-  @Modifying
-  @Query(value = "DELETE FROM care_Site WHERE fhir_logical_id = :fhir_logical_id", nativeQuery = true)
-  void deleteCareSiteByLogicalId(@Param("fhir_logical_id") String fhirLogicalId);
+  /**
+   * Delete entries in OMOP CDM table using fhir_logical_id.
+   *
+   * @param fhirLogicalId logical id of the FHIR resource
+   */
+  void deleteByFhirLogicalId(String fhirLogicalId);
 }

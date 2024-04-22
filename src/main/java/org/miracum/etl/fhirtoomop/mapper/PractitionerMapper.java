@@ -39,9 +39,8 @@ public class PractitionerMapper implements FhirMapper<Practitioner> {
      *
      * @param bulkload     Indicates whether the mapper operates in bulk load mode.
      * @param dbMappings   The database mappings used for mapping resources.
-     * @param repositories
      */
-    public PractitionerMapper(Boolean bulkload, DbMappings dbMappings, OmopRepository repositories) {
+    public PractitionerMapper(Boolean bulkload, DbMappings dbMappings) {
         this.bulkload = bulkload;
         this.dbMappings = dbMappings;
     }

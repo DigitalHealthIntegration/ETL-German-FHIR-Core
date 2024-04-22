@@ -1100,25 +1100,26 @@ public class ObservationMapper implements FhirMapper<Observation> {
       Quantity valueQuantity,
       String observationId) {
     basisObservation.setValueAsNumber(valueQuantity.getValue());
+    var quantityUnitCodingFormat =
+            new Coding().setCode(valueQuantity.getCode());
     if (valueQuantity.hasSystem()){
-      var quantityUnitCodingFormat =
-              new Coding().setCode(valueQuantity.getCode()).setSystem(valueQuantity.getSystem());
-      var valueQuantityUnitConcept =
-              findOmopConcepts.getConcepts(
-                      quantityUnitCodingFormat,
-                      effectiveDateTime.toLocalDate(),
-                      bulkload,
-                      dbMappings,
-                      observationId);
-      if (valueQuantityUnitConcept != null) {
+      quantityUnitCodingFormat.setSystem(valueQuantity.getSystem());
+    }
+    var valueQuantityUnitConcept =
+            findOmopConcepts.getConcepts(
+                    quantityUnitCodingFormat,
+                    effectiveDateTime.toLocalDate(),
+                    bulkload,
+                    dbMappings,
+                    observationId);
+    if (valueQuantityUnitConcept != null) {
 
-        basisObservation.setUnitConceptId(valueQuantityUnitConcept.getConceptId());
-        basisObservation.setUnitSourceValue(
-                valueQuantity.getUnit() == null
-                        ? valueQuantityUnitConcept.getConceptCode()
-                        : valueQuantity.getUnit());
-        addToList(observations, basisObservation);
-      }
+      basisObservation.setUnitConceptId(valueQuantityUnitConcept.getConceptId());
+      basisObservation.setUnitSourceValue(
+              valueQuantity.getUnit() == null
+                      ? valueQuantityUnitConcept.getConceptCode()
+                      : valueQuantity.getUnit());
+      addToList(observations, basisObservation);
     }
   }
 

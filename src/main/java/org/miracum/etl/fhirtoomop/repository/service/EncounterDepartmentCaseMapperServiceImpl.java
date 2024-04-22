@@ -57,7 +57,12 @@ public class EncounterDepartmentCaseMapperServiceImpl {
     return visitDetailRepository.getStartDateOfVisitByFhirLogicalId(fhirLogicalId);
   }
 
-  public void deleteExistingDepartmentCaseByFhirLogicalId(String fhirLogicalId) {
+  /**
+   * Delete FHIR Encounter resources from OMOP CDM tables using fhir_logical_id
+   *
+   * @param fhirLogicalId logical id of the FHIR Encounter resource
+   */
+  public void deleteExistingDepartmentCaseByLogicalId(String fhirLogicalId) {
     visitDetailRepository.deleteByFhirLogicalId(fhirLogicalId);
   }
 }
