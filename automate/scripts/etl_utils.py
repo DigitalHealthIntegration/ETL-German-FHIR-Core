@@ -6,7 +6,6 @@ import os
 import boto3
 import zipfile
 import shutil
-import etl_constants
 import psycopg2
 import json
 import time
@@ -14,6 +13,11 @@ import requests
 from fhir.resources.R4B.fhirtypesvalidators import bundle_validator
 from pathlib import Path
 from dotenv import load_dotenv
+
+HOSPITAL_FILE_NAME = "hospitalInformation*.json"
+PRACTITIONER_FILE_NAME = "practitionerInformation*.json"
+S3_BUCKET_NAME = "demo-ocl-image-store"
+S3_REGION_NAME = "us-east-1"
     
 def run_docker_compose(yaml_path):
     try:
@@ -88,7 +92,7 @@ def process_and_upload_file(file_path):
                 if r.status_code == requests.codes.ok:  # Check if the response is successful
                     print("Response uploaded successfully.")
                     print("Response Content:")
-                    print(r.text)  # Print the full response content
+                    
                     # Output file name that was processed
                     print("Processed File:", file_path)
                         
@@ -248,7 +252,8 @@ def download_file_from_s3(folder_name, object_name, local_file_name):
 
 def download_hash_from_s3(folder_name):
     object_name = f"ocl/{folder_name}/md5_hash.txt"
-    download_file_from_s3(bucket_name, object_name, local_file_path_md5, region_name)
+    local_file_md5 = "md5_hash.txt"
+    download_file_from_s3(folder_name, object_name, local_file_md5)
 
 def read_file(file_path):
     try:
@@ -272,7 +277,8 @@ def download_from_s3(bucket_name, object_name, local_file_path, region_name):
 
 def download_latest_vocab_from_s3(folder_name):
     object_name = f"ocl/{folder_name}/omop-vocab.zip"
-    download_file_from_s3(folder_name, object_name, "omop-vocab.zip")
+    local_file_vocab = "omop-vocab.zip"
+    download_file_from_s3(folder_name, object_name, local_file_vocab)
 
 def update_json_file(version, md5_hash, file_path):
     try:
@@ -416,7 +422,3 @@ def update_dotenv_file(value):
 def load_env_file():
     load_dotenv()
 
-HOSPITAL_FILE_NAME = "hospitalInformation*.json"
-PRACTITIONER_FILE_NAME = "practitionerInformation*.json"
-S3_BUCKET_NAME = "demo-ocl-image-store"
-S3_REGION_NAME = "us-east-1"

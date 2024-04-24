@@ -25,6 +25,7 @@ def reset_etl(synthea=False,hapi=False,omop=False,vocab=None,all=False):
         return
     if all:
         print("Reset Everything initiated...")
+        print(OMOP_POSTGRESS_VOLUME_NAME)
         etl_utils.remove_docker_containers("../../deploy/docker-compose-postgress.yml")
         etl_utils.remove_docker_containers("../../deploy/docker-compose-etl.yml")
         etl_utils.remove_docker_containers(".././hapi/docker-compose-hapi.yml")
@@ -48,8 +49,6 @@ def reset_etl(synthea=False,hapi=False,omop=False,vocab=None,all=False):
 def run_etl(hapi=False,synthetic_data_dir=None,synthea=False,vocab=None,incremental_load=False):
     print("Running ETL process...")
     if hapi:
-        print(incremental_load)
-        print(f"With HAPI: {with_hapi}")
         etl_utils.run_docker_compose(".././hapi/docker-compose-hapi.yml")
         if synthea:
             etl_utils.run_docker_compose_with_logs(".././synthea/docker-compose-synthea.yml")
@@ -153,7 +152,8 @@ def verify_vocab_and_download(vocab_version):
             print("Download only VOCAB")
             etl_utils.download_latest_vocab_from_s3(vocab_version)
             hash_from_s3 = etl_utils.read_file(f"../../{vocab_version}/md5_hash.txt")
-            etl_utils.update_json_file(vocab_version,hash_from_s3,"latest_version_hash.json")
+            etl_utils.update_json_file(vocab_version,hash_from_s3,"../../latest_version_hash.json")
+            etl_utils.unzip_vocab(vocab_version)
             print("Download VOCAB completed")
 
     else:
@@ -168,7 +168,7 @@ def verify_vocab_and_download(vocab_version):
         print("Download VOCAB and hash completed")
 
 if __name__ == "__main__":
+    OMOP_POSTGRESS_VOLUME_NAME = "fhir-to-omop_omop-postgress"
+    HAPI_DB_VOLUME_NAME = "hapi_hapi-fhir-postgres"
     main()
 
-OMOP_POSTGRESS_VOLUME_NAME = "fhir-to-omop_omop-postgress"
-HAPI_DB_VOLUME_NAME = "hapi_hapi-fhir-postgres"
