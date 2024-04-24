@@ -85,9 +85,8 @@ public class OrganizationMapper implements FhirMapper<Organization> {
         if(concept == null){
             log.warn("concept is not present for Organization {}",organizationId);
             noFhirReferenceCounter.increment();
-            return null;
+//            return null;
         }
-        var placeOfService = concept.getConceptId();
         Random random = new Random();
         int generatedPositiveLong = Math.abs(random.nextInt());
 
@@ -95,7 +94,6 @@ public class OrganizationMapper implements FhirMapper<Organization> {
                         .careSiteId((long) generatedPositiveLong)
                 .careSiteName(organizationName)
                 .careSiteSourceValue(sourceValue)
-                .placeOfServiceConceptId(placeOfService)
                 .fhirLogicalId(organizationLogicId)
                 .fhirIdentifier(organizationIdentifier)
                 .build();
