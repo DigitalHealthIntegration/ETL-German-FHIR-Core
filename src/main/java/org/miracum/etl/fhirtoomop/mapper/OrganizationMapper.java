@@ -76,27 +76,31 @@ public class OrganizationMapper implements FhirMapper<Organization> {
 
         var organizationName = srcOrganization.getName();
         var sourceValue  = srcOrganization.getIdElement().getIdPart();
-        var organizationTag = srcOrganization.getMeta().getTag().stream().findFirst();
-        if (organizationTag.isEmpty()) {
-            return null;
-        }
-        var organizationMetaCoding =organizationTag.get();
-        var concept = findOmopConcepts.getConcepts(organizationMetaCoding, null,bulkload,dbMappings,organizationId);
-        if(concept == null){
-            log.warn("concept is not present for Organization {}",organizationId);
-            noFhirReferenceCounter.increment();
-//            return null;
-        }
         Random random = new Random();
         int generatedPositiveLong = Math.abs(random.nextInt());
 
         var newCareSite = CareSite.builder()
-                        .careSiteId((long) generatedPositiveLong)
+                .careSiteId((long) generatedPositiveLong)
                 .careSiteName(organizationName)
                 .careSiteSourceValue(sourceValue)
                 .fhirLogicalId(organizationLogicId)
                 .fhirIdentifier(organizationIdentifier)
                 .build();
+        if (srcOrganization.getMeta().hasTag()){
+            var organizationTag = srcOrganization.getMeta().getTag().stream().findFirst();
+            if (organizationTag.isEmpty()) {
+                return null;
+            }
+            var organizationMetaCoding =organizationTag.get();
+            var concept = findOmopConcepts.getConcepts(organizationMetaCoding, null,bulkload,dbMappings,organizationId);
+            if(concept == null){
+                log.warn("concept is not present for Organization {}",organizationId);
+                noFhirReferenceCounter.increment();
+            return null;
+            }
+            var placeOfService = concept.getConceptId();
+            newCareSite.setPlaceOfServiceConceptId(placeOfService);
+        }
         wrapper.setCareSite(newCareSite);
         return wrapper;
     }
