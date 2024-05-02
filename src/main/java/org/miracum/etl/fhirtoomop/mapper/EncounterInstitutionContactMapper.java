@@ -178,7 +178,8 @@ public class EncounterInstitutionContactMapper implements FhirMapper<Encounter> 
             encounterSourceIdentifier,
             personId,
             institutionContactOnset,
-            encounterId, visitOccurrenceReason);
+            encounterId,
+            visitOccurrenceReason);
 
     if (newVisitOccurrence == null){
       return null;
@@ -336,7 +337,7 @@ public class EncounterInstitutionContactMapper implements FhirMapper<Encounter> 
     var endDateTime = institutionContactOnset.getEndDateTime();
     var visitTypeConceptId = getVisitTypeConceptId(srcEncounter, endDateTime);
     var visitEndDateTime = setVisitEndDateTime(visitTypeConceptId, endDateTime, encounterId);
-    var visitSourceValue =visitOccurrenceReason;
+    var visitSourceValue = cutString(encounterSourceIdentifier);
     var careSiteId = getCareSiteId(srcEncounter.getServiceProvider().getReferenceElement().getIdPart());
     if (careSiteId == null){
       log.debug("No [CareSite] found for the encounter: {}", encounterId);
