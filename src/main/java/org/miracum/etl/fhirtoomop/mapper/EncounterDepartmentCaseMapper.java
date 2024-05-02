@@ -20,7 +20,6 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.r4.model.Encounter;
 import org.hl7.fhir.r4.model.Encounter.EncounterLocationComponent;
@@ -89,17 +88,17 @@ public class EncounterDepartmentCaseMapper implements FhirMapper<Encounter> {
    * Constructor for objects of the class EncounterDepartmentCaseMapper.
    *
    * @param referenceUtils utilities for the identification of FHIR resource references
-   * @param fhirPath FhirPath engine to evaluate path expressions over FHIR resources
-   * @param bulkload parameter which indicates whether the Job should be run as bulk load or
-   *     incremental load
-   * @param dbMappings collections for the intermediate storage of data from OMOP CDM in RAM
+   * @param fhirPath       FhirPath engine to evaluate path expressions over FHIR resources
+   * @param bulkload       parameter which indicates whether the Job should be run as bulk load or
+   *                       incremental load
+   * @param dbMappings     collections for the intermediate storage of data from OMOP CDM in RAM
    */
   @Autowired
   public EncounterDepartmentCaseMapper(
-      ResourceFhirReferenceUtils referenceUtils,
-      IFhirPath fhirPath,
-      Boolean bulkload,
-      DbMappings dbMappings) {
+          ResourceFhirReferenceUtils referenceUtils,
+          IFhirPath fhirPath,
+          Boolean bulkload,
+          DbMappings dbMappings) {
     this.referenceUtils = referenceUtils;
     this.fhirPath = fhirPath;
 
@@ -725,7 +724,7 @@ public class EncounterDepartmentCaseMapper implements FhirMapper<Encounter> {
   private void deleteExistingVisitDetails(
       String departmentCaseLogicId, String departmentCaseLogicIdentifier) {
     if (!Strings.isNullOrEmpty(departmentCaseLogicId)) {
-      departmentCaseMapperService.deleteExistingDepartmentcaseByLogicalId(departmentCaseLogicId);
+      departmentCaseMapperService.deleteExistingDepartmentCaseByLogicalId(departmentCaseLogicId);
     } else {
       departmentCaseMapperService.deleteExistingDepartmentcaseByIdentifier(
           departmentCaseLogicIdentifier);

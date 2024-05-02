@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * The VisitDetailRepository interface represents a repository for the visit_detail table in OMOP
@@ -48,5 +49,4 @@ public interface VisitDetailRepository
   @Query(value = "SELECT * FROM visit_detail where fhir_logical_id = :fhirLogicalId limit 1",
           nativeQuery = true)
   VisitDetail getStartDateOfVisitByFhirLogicalId(@Param("fhirLogicalId") String fhirLogicalId);
-
 }

@@ -92,7 +92,7 @@ public class FindOmopConcepts {
     var fhirCodeVersion = getCodeVersion(fhirCoding);
     var codeValidDate = resourceDate == null ? null : getValidDate(fhirCodeVersion, resourceDate);
 
-    if (bulkLoad.equals(Boolean.FALSE)
+    if (bulkLoad.equals(Boolean.FALSE) && fhirCoding.hasSystem()
         && fhirCoding.getSystem().equals("http://no-medication-code-found")) {
       return defaultMedicationConcept(fhirCode);
     }

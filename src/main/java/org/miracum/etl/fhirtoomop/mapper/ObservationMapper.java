@@ -1101,21 +1101,24 @@ public class ObservationMapper implements FhirMapper<Observation> {
       String observationId) {
     basisObservation.setValueAsNumber(valueQuantity.getValue());
     var quantityUnitCodingFormat =
-        new Coding().setCode(valueQuantity.getCode()).setSystem(valueQuantity.getSystem());
+            new Coding().setCode(valueQuantity.getCode());
+    if (valueQuantity.hasSystem()){
+      quantityUnitCodingFormat.setSystem(valueQuantity.getSystem());
+    }
     var valueQuantityUnitConcept =
-        findOmopConcepts.getConcepts(
-            quantityUnitCodingFormat,
-            effectiveDateTime.toLocalDate(),
-            bulkload,
-            dbMappings,
-            observationId);
+            findOmopConcepts.getConcepts(
+                    quantityUnitCodingFormat,
+                    effectiveDateTime.toLocalDate(),
+                    bulkload,
+                    dbMappings,
+                    observationId);
     if (valueQuantityUnitConcept != null) {
 
       basisObservation.setUnitConceptId(valueQuantityUnitConcept.getConceptId());
       basisObservation.setUnitSourceValue(
-          valueQuantity.getUnit() == null
-              ? valueQuantityUnitConcept.getConceptCode()
-              : valueQuantity.getUnit());
+              valueQuantity.getUnit() == null
+                      ? valueQuantityUnitConcept.getConceptCode()
+                      : valueQuantity.getUnit());
       addToList(observations, basisObservation);
     }
   }
@@ -1754,23 +1757,25 @@ public class ObservationMapper implements FhirMapper<Observation> {
     basisMeasurement.setValueAsNumber(valueQuantity.getValue());
     basisMeasurement.setValueSourceValue(valueQuantity.getValue().toString());
 
-    var quantityUnitCodingFormat =
-        new Coding().setCode(valueQuantity.getCode()).setSystem(valueQuantity.getSystem());
+    if (valueQuantity.hasSystem()){
+      var quantityUnitCodingFormat =
+              new Coding().setCode(valueQuantity.getCode()).setSystem(valueQuantity.getSystem());
 
-    var valueQuantityUnitConcept =
-        findOmopConcepts.getConcepts(
-            quantityUnitCodingFormat,
-            effectiveDateTime.toLocalDate(),
-            bulkload,
-            dbMappings,
-            observationId);
-    if (valueQuantityUnitConcept != null) {
-      basisMeasurement.setUnitConceptId(valueQuantityUnitConcept.getConceptId());
-      basisMeasurement.setUnitSourceValue(
-          valueQuantity.getUnit() == null
-              ? valueQuantityUnitConcept.getConceptCode()
-              : valueQuantity.getUnit());
-      addToList(measurements, basisMeasurement);
+      var valueQuantityUnitConcept =
+              findOmopConcepts.getConcepts(
+                      quantityUnitCodingFormat,
+                      effectiveDateTime.toLocalDate(),
+                      bulkload,
+                      dbMappings,
+                      observationId);
+      if (valueQuantityUnitConcept != null) {
+        basisMeasurement.setUnitConceptId(valueQuantityUnitConcept.getConceptId());
+        basisMeasurement.setUnitSourceValue(
+                valueQuantity.getUnit() == null
+                        ? valueQuantityUnitConcept.getConceptCode()
+                        : valueQuantity.getUnit());
+        addToList(measurements, basisMeasurement);
+      }
     }
   }
 

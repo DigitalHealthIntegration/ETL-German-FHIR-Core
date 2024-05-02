@@ -4,24 +4,19 @@ import ca.uhn.fhir.fhirpath.IFhirPath;
 import com.google.common.base.Strings;
 import io.micrometer.core.instrument.Counter;
 import lombok.extern.slf4j.Slf4j;
-import org.aspectj.apache.bcel.classfile.Module;
 import org.hl7.fhir.r4.model.Organization;
 import org.miracum.etl.fhirtoomop.DbMappings;
 import org.miracum.etl.fhirtoomop.config.FhirSystems;
-import org.miracum.etl.fhirtoomop.mapper.FhirMapper;
 import org.miracum.etl.fhirtoomop.mapper.helpers.FindOmopConcepts;
 import org.miracum.etl.fhirtoomop.mapper.helpers.MapperMetrics;
-import org.miracum.etl.fhirtoomop.mapper.helpers.ResourceCheckDataAbsentReason;
 import org.miracum.etl.fhirtoomop.mapper.helpers.ResourceFhirReferenceUtils;
-import org.miracum.etl.fhirtoomop.mapper.helpers.ResourceOmopReferenceUtils;
 import org.miracum.etl.fhirtoomop.model.OmopModelWrapper;
 import org.miracum.etl.fhirtoomop.model.omop.CareSite;
-import org.miracum.etl.fhirtoomop.model.omop.Location;
-import org.miracum.etl.fhirtoomop.repository.service.PatientMapperServiceImpl;
+import org.miracum.etl.fhirtoomop.repository.OmopRepository;
+import org.miracum.etl.fhirtoomop.repository.service.OrganizationServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDate;
 import java.util.Random;
 
 @Slf4j
@@ -36,6 +31,8 @@ public class OrganizationMapper implements FhirMapper<Organization> {
     ResourceFhirReferenceUtils fhirReferenceUtils;
     @Autowired
     FindOmopConcepts findOmopConcepts;
+    @Autowired
+    OrganizationServiceImpl organizationService;
 
     private static final Counter noFhirReferenceCounter =
             MapperMetrics.setNoFhirReferenceCounter("stepProcessOrganization");
@@ -45,10 +42,10 @@ public class OrganizationMapper implements FhirMapper<Organization> {
     /**
      * Constructor for objects of the class OrganizationMapper.
      *
-     * @param fhirPath FhirPath engine to evaluate path expressions over FHIR resources
-     * @param bulkload parameter which indicates whether the Job should be run as bulk load or
-     *     incremental load
-     * @param dbMappings collections for the intermediate storage of data from OMOP CDM in RAM
+     * @param fhirPath     FhirPath engine to evaluate path expressions over FHIR resources
+     * @param bulkload     parameter which indicates whether the Job should be run as bulk load or
+     *                     incremental load
+     * @param dbMappings   collections for the intermediate storage of data from OMOP CDM in RAM
      */
     @Autowired
     public OrganizationMapper(IFhirPath fhirPath, Boolean bulkload, DbMappings dbMappings) {
@@ -74,6 +71,12 @@ public class OrganizationMapper implements FhirMapper<Organization> {
             organizationId = srcOrganization.getId();
         }
 
+        if (bulkload.equals(Boolean.FALSE)){
+            organizationService.deleteExistingCareSiteByFhirLogicalId(organizationLogicId);
+            if (isDeleted){
+                return null;
+            }
+        }
         var organizationName = srcOrganization.getName();
         var sourceValue  = srcOrganization.getIdElement().getIdPart();
         var organizationTag = srcOrganization.getMeta().getTag().stream().findFirst();

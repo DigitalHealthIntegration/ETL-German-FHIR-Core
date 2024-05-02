@@ -44,8 +44,6 @@ public class OrganizationStepListener implements StepExecutionListener {
             log.info("========= Preparing OMOP DB for IncrementalLoad =========");
             cleanUpTable();
         }
-        dbMappings.setFindHardCodeConcept(
-                repositories.getSourceToConceptRepository().sourceToConceptMap());
         dbMappings
                 .getOmopConceptMapWrapper()
                 .setFindValidSnomedConcept(
@@ -59,6 +57,9 @@ public class OrganizationStepListener implements StepExecutionListener {
         dbMappings.getOmopConceptMapWrapper().setFindValidWHOConcept(
                 repositories.getConceptRepository().findValidConceptId(VOCABULARY_WHO)
         );
+        dbMappings.setFindCareSiteId(repositories.getCareSiteRepository().careSitesMap());
+        dbMappings.setFindHardCodeConcept(
+                repositories.getSourceToConceptRepository().sourceToConceptMap());
     }
 
     @Override
