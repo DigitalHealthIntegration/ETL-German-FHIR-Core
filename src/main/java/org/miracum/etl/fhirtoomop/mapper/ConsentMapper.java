@@ -50,6 +50,10 @@ public class ConsentMapper implements FhirMapper<Consent> {
       MapperMetrics.setNoFhirReferenceCounter("stepProcessConsent");
   private static final Counter deletedFhirReferenceCounter =
       MapperMetrics.setDeletedFhirRessourceCounter("stepProcessConsent");
+  private static final Counter statusNotAcceptableCounter =
+          MapperMetrics.setStatusNotAcceptableCounter("stepProcessConsent");
+  private static final Counter noCategoryCount =
+          MapperMetrics.setCategoryNotFoundCount("stepProcessObservations");
 
   @Autowired OmopConceptServiceImpl omopConceptService;
   @Autowired ResourceOmopReferenceUtils omopReferenceUtils;
@@ -115,12 +119,14 @@ public class ConsentMapper implements FhirMapper<Consent> {
           "The [status]: {} of {} is not acceptable for writing into OMOP CDM. Skip resource.",
           statusValue,
           consentId);
+      statusNotAcceptableCounter.increment();
       return null;
     }
 
     var consentCategoryCoding = getResuscitateStatusCategoryCode(srcConsent);
     if (consentCategoryCoding == null) {
       log.warn("No Category [dnr] found in [Consent]: {}. Skip resource", consentId);
+      noCategoryCount.increment();
       return null;
     }
 
