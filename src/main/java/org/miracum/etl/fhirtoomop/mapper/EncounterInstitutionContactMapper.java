@@ -178,7 +178,8 @@ public class EncounterInstitutionContactMapper implements FhirMapper<Encounter> 
             encounterSourceIdentifier,
             personId,
             institutionContactOnset,
-            encounterId, visitOccurrenceReason);
+            encounterId,
+            visitOccurrenceReason);
 
     if (newVisitOccurrence == null){
       return null;
