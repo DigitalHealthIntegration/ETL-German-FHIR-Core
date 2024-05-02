@@ -1,0 +1,13 @@
+FROM openjdk:17-jdk-alpine
+
+COPY files /
+
+RUN apk update \
+    && apk add git curl unzip libstdc++ go \
+    && git clone https://github.com/synthetichealth/synthea.git \
+    && mv synthea.properties /synthea/src/main/resources/synthea.properties \
+    && chmod +x /entrypoint.sh
+
+VOLUME /synthea/output
+
+CMD ["/entrypoint.sh"]

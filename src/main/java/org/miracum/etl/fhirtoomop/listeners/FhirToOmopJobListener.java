@@ -32,6 +32,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.miracum.etl.fhirtoomop.model.omop.CareSite;
 import org.miracum.etl.fhirtoomop.model.omop.SourceToConceptMap;
 import org.miracum.etl.fhirtoomop.repository.OmopRepository;
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobExecutionListener;
@@ -84,6 +86,8 @@ public class FhirToOmopJobListener implements JobExecutionListener {
 
   @Value("${app.startSingleStep}")
   private String startSingleStep;
+
+  private Marker summaryMarker = MarkerFactory.getMarker("summary");
 
   /**
    * Constructor for objects of the class FhirToOmopJobListener.
@@ -271,9 +275,9 @@ public class FhirToOmopJobListener implements JobExecutionListener {
       logSkippedReasons(jobExecution);
       //    logSkippedReasons(jobExecution);
       var endJob = "==== Job End ====";
-      log.info("=".repeat(endJob.length()));
-      log.info(endJob);
-      log.info("=".repeat(endJob.length()));
+      log.info(summaryMarker,"=".repeat(endJob.length()));
+      log.info(summaryMarker,endJob);
+      log.info(summaryMarker,"=".repeat(endJob.length()));
     }
   }
 
@@ -299,11 +303,11 @@ public class FhirToOmopJobListener implements JobExecutionListener {
             "Step Duration");
     var sepLine = "-".repeat(header.length());
 
-    log.info("");
-    log.info("==== Summary ====");
-    log.info(sepLine);
-    log.info(header);
-    log.info(sepLine);
+    log.info(summaryMarker,"");
+    log.info(summaryMarker,"==== Summary ====");
+    log.info(summaryMarker,sepLine);
+    log.info(summaryMarker,header);
+    log.info(summaryMarker,sepLine);
     List<String> ignoredSteps = Arrays.asList("stepPostProcess", "stepValidation", "initJobInfo");
     for (var stepExecution : jobExecution.getStepExecutions()) {
       Duration stepExecutionDuration =
@@ -319,7 +323,7 @@ public class FhirToOmopJobListener implements JobExecutionListener {
                     .counter("batch.fhir.resources.deleted", "deleted", stepExecution.getStepName())
                     .count();
         Integer skipedCount = stepExecution.getFilterCount() - deletedCount;
-        log.info(
+        log.info(summaryMarker,
             String.format(
                 format,
                 stepExecution.getStepName(),
@@ -334,7 +338,7 @@ public class FhirToOmopJobListener implements JobExecutionListener {
         totalSkippedCount += skipedCount;
       }
       if (stepExecution.getStepName().equals("stepPostProcess")) {
-        log.info(
+        log.info(summaryMarker,
             "[{}] has updated/written [{}] Rows in [{}].",
             stepExecution.getStepName(),
             stepExecution.getWriteCount(),
@@ -342,10 +346,10 @@ public class FhirToOmopJobListener implements JobExecutionListener {
       }
     }
 
-    log.info("Total Read FHIR Resources: {}", totalReadCount);
-    log.info("Total Written FHIR Resources: {}", totalWriteCount);
-    log.info("Total Skipped FHIR Resources: {}", totalSkippedCount);
-    log.info("Total Deleted FHIR Resources: {}", totalDeletedCount);
+    log.info(summaryMarker,"Total Read FHIR Resources: {}", totalReadCount);
+    log.info(summaryMarker,"Total Written FHIR Resources: {}", totalWriteCount);
+    log.info(summaryMarker,"Total Skipped FHIR Resources: {}", totalSkippedCount);
+    log.info(summaryMarker,"Total Deleted FHIR Resources: {}", totalDeletedCount);
   }
 
   /**
@@ -358,9 +362,9 @@ public class FhirToOmopJobListener implements JobExecutionListener {
     var format = "| %-40s | %-40s | %-12s |";
     var header = String.format(format, "Step", "Skip Reason", "Skipped Count");
     var sepLine = "-".repeat(header.length());
-    log.info(sepLine);
-    log.info(header);
-    log.info(sepLine);
+    log.info(summaryMarker,sepLine);
+    log.info(summaryMarker,header);
+    log.info(summaryMarker,sepLine);
 
     String previousStep = null; // To keep track of the previous step
 
@@ -373,10 +377,10 @@ public class FhirToOmopJobListener implements JobExecutionListener {
 
       // Print current step only if it's different from the previous one
       if (!Objects.equals(currentStep, previousStep)) {
-        log.info(String.format(format, currentStep, counter.getId().getDescription(), (int) counter.count()));
+        log.info(summaryMarker,String.format(format, currentStep, counter.getId().getDescription(), (int) counter.count()));
       } else {
         // If it's the same step, print an empty string for the step column
-        log.info(String.format(format, "", counter.getId().getDescription(), (int) counter.count()));
+        log.info(summaryMarker,String.format(format, "", counter.getId().getDescription(), (int) counter.count()));
       }
 
       previousStep = currentStep; // Update previous step
