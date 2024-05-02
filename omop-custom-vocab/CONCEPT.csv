@@ -125,7 +125,6 @@ concept_id	concept_name	domain_id	vocabulary_id	concept_class_id	standard_concep
 70000039	Counselling on postpartum family planning conducted	Procedure	WHO	Survey	s	ANC.B10.DE144	20120608	20991231	
 70000040	Birth weight	Measurement	WHO	Survey	s	ANC.End.23	20120608	20991231	
 70000041	Preterm Birth	Observation	WHO	Survey	s	ANC.End.17	20120608	20991231	
-70000042	Hematocrit [Volume Fraction] of Blood	Measurement	IPRD	Survey	s	20570-8	20120608	20991231	
 70000043	Reason Referred Out	Observation	IPRD	Survey	s	reason-referred-out	20120608	20991231	
 70000044	Family planning method selected	Observation	WHO	Survey	s	ANC.B10.DE145	20120608	20991231	
 70000082	Admission Outcome	Observation	IPRD	Survey	s	IPRD.DE188	20120608	20991231	
@@ -197,7 +196,7 @@ concept_id	concept_name	domain_id	vocabulary_id	concept_class_id	standard_concep
 70000111	Diabetes	Condition	IPRD	Survey	s	IPRD.DE223	20120608	20991231	
 70000112	Cholera	Condition	IPRD	Survey	s	IPRD.DE224	20120608	20991231	
 70000113	Typhoid	Condition	IPRD	Survey	s	IPRD.DE225	20120608	20991231	
-70000114	Long-lasting Insecticidal Nets (LLINs)	Drug	IPRD	Survey	s	IPRD.DE20	20120608	20991231	
+70000114	Long-lasting Insecticidal Nets (LLINs)	Observation	IPRD	Survey	s	IPRD.DE20	20120608	20991231	
 70000115	IPTp-SP dose 4 provided	Drug	IPRD	Survey	s	IPRD.DE45	20120608	20991231	
 70000116	IPTp-SP dose 5 provided	Drug	IPRD	Survey	s	IPRD.DE46	20120608	20991231	
 70000117	IPTp-SP dose 6 provided	Drug	IPRD	Survey	s	IPRD.DE82	20120608	20991231	
@@ -279,7 +278,6 @@ concept_id	concept_name	domain_id	vocabulary_id	concept_class_id	standard_concep
 80000044	Mother was counselled but declined	Observation	IPRD	Survey	s	IPRD.DE80	20120608	20991231	
 80000046	Routine	Observation	IPRD	Survey	s	IPRD.DE98	20120608	20991231	
 80000047	4-7 Days	Observation	IPRD	Survey	s	IPRD.DE104	20120608	20991231	
-80000048	Emergency Contraception	Observation	IPRD	Survey	s	LA27921-8	20120608	20991231	
 80000049	Grade 2 or (++): oedema in both feet and legs	Observation	IPRD	Survey	s	IPRD.DE176	20120608	20991231	
 80000050	Macerated	Observation	IPRD	Survey	s	IPRD.DE65	20120608	20991231	
 80000051	ABC - Absconded	Observation	IPRD	Survey	s	IPRD.DE189	20120608	20991231	
@@ -323,3 +321,19 @@ concept_id	concept_name	domain_id	vocabulary_id	concept_class_id	standard_concep
 90000004	Organization-Lga	Visit	IPRD	Organization		lga	20020131	20991231	
 90000005	Organization-Ward	Visit	IPRD	Organization		ward	20020131	20991231	
 90000006	Organization-facility	Visit	IPRD	Organization		facility	20020131	20991231	
+90000008	Past medical history	Condition	IPRD	Survey	s	IPRD.DE11	20120608	20991231	
+90000009	Spontaneous Abortion	Observation	IPRD	Survey	s	IPRD.DE55	20120608	20991231	
+90000010	Health Condition Status	Observation	IPRD	Survey	s	IPRD.DE57	20120608	20991231	
+90000011	Admitted	Observation	IPRD	Survey	s	IPRD.DE58	20120608	20991231	
+90000012	Discharged	Observation	IPRD	Survey	s	IPRD.DE59	20120608	20991231	
+90000013	Referred	Observation	IPRD	Survey	s	IPRD.DE60	20120608	20991231	
+90000014	Hepatitis C positive	Observation	WHO	Survey	s	ANC.B9.DE90	20120608	20991231	
+90000015	Hepatitis C negetive	Observation	WHO	Survey	s	ANC.B9.DE91	20120608	20991231	
+90000016	Counselling on postpartum family planning conducted	Procedure	IPRD	Survey	s	ANC.B10.DE144	20120608	20991231	
+90000017	Counselling conducted on hepatitis C positive	Procedure	WHO	Survey	s	ANC.B9.DE80	20120608	20991231	
+90000018	Counselling conducted on hepatitis B positive	Procedure	WHO	Survey	s	ANC.B9.DE79	20120608	20991231	
+90000019	Malaria - positive	Observation	IPRD	Survey	s	positive	20120608	20991231	
+90000020	Malaria - negetive	Observation	IPRD	Survey	s	negetive	20120608	20991231	
+90000021	Malaria - invalid	Observation	IPRD	Survey	s	invalid	20120608	20991231	
+90000022	Laboratory procedure	Procedure	IPRD	Survey	s	IPRD.DE255	20120608	20991231	
+90000023	Blood PCV test result	Observation	IPRD	Survey	s	blood-pcv	20120608	20991231	

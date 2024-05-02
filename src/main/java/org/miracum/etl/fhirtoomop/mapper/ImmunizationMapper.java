@@ -3,6 +3,7 @@ package org.miracum.etl.fhirtoomop.mapper;
 import static org.miracum.etl.fhirtoomop.Constants.CONCEPT_EHR;
 import static org.miracum.etl.fhirtoomop.Constants.CONCEPT_NO_MATCHING_CONCEPT;
 import static org.miracum.etl.fhirtoomop.Constants.FHIR_RESOURCE_ACCEPTABLE_EVENT_STATUS_LIST;
+import static org.miracum.etl.fhirtoomop.Constants.FHIR_RESOURCE_IPRD_IMMUNIZATION_CODE;
 import static org.miracum.etl.fhirtoomop.Constants.OMOP_DOMAIN_DRUG;
 import static org.miracum.etl.fhirtoomop.Constants.OMOP_DOMAIN_OBSERVATION;
 import static org.miracum.etl.fhirtoomop.Constants.VOCABULARY_ATC;
@@ -18,6 +19,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
@@ -27,6 +30,7 @@ import org.hl7.fhir.r4.model.Quantity;
 import org.hl7.fhir.r4.model.ResourceType;
 import org.miracum.etl.fhirtoomop.DbMappings;
 import org.miracum.etl.fhirtoomop.config.FhirSystems;
+import org.miracum.etl.fhirtoomop.mapper.helpers.FindOmopConceptRelationship;
 import org.miracum.etl.fhirtoomop.mapper.helpers.FindOmopConcepts;
 import org.miracum.etl.fhirtoomop.mapper.helpers.MapperMetrics;
 import org.miracum.etl.fhirtoomop.mapper.helpers.ResourceCheckDataAbsentReason;
@@ -62,6 +66,9 @@ public class ImmunizationMapper implements FhirMapper<Immunization> {
   @Autowired ResourceCheckDataAbsentReason checkDataAbsentReason;
   @Autowired FindOmopConcepts findOmopConcepts;
   @Autowired DrugExposureMapperServiceImpl drugExposureService;
+  @Autowired
+  FindOmopConceptRelationship findOmopConceptRelationship;
+
   @Autowired
   EncounterDepartmentCaseMapperServiceImpl departmentCaseMapperService;
   private static final Counter noStartDateCounter =
@@ -245,6 +252,19 @@ public class ImmunizationMapper implements FhirMapper<Immunization> {
 
     var immunizationVocabularyId = findOmopConcepts.getOmopVocabularyId(vaccineCoding.getSystem());
 
+    if(FHIR_RESOURCE_IPRD_IMMUNIZATION_CODE.contains(vaccineCoding.getCode())){
+      var vaccineName = vaccineCoding.getDisplay();
+
+      Pattern pattern = Pattern.compile("\\d");
+      Matcher matcher = pattern.matcher(vaccineName);
+      if (matcher.find()) {
+        var numericValue = Integer.parseInt(matcher.group());
+        dose = new Quantity(numericValue == 0 ? 1 : numericValue);
+      } else {
+        dose = new Quantity(1);
+      }
+    }
+
     if (immunizationVocabularyId.equals(VOCABULARY_ATC)) {
       // for ATC codes
 
@@ -290,45 +310,101 @@ public class ImmunizationMapper implements FhirMapper<Immunization> {
           visitOccId,
           immunizationId);
     }else if (immunizationVocabularyId.equals(VOCABULARY_IPRD)) {
-      // for SNOMED codes
+      // for IPRD codes
 
-      var snomedCodingList = getSnomedCodingList(vaccineCoding);
-      var snomedStandardConcepts =
-              getSnomedConceptList(
-                      snomedCodingList, immunizationOnset, immunizationLogicId, immunizationId);
+//      var snomedCodingList = getSnomedCodingList(vaccineCoding);
+      var getConcept =
+              findOmopConcepts.getConcepts(
+                      vaccineCoding,null,bulkload,dbMappings,immunizationId
+              );
+      if(getConcept == null){
+        log.warn("no concept found for  {}",immunizationId);
+        return;
+      }
+      var getConceptRelation =
+              findOmopConceptRelationship.getConceptRelationShip(getConcept.getConceptId());
+      if(getConceptRelation != null){
+        var getActualConcept = findOmopConcepts.getConcepts(getConceptRelation.getConceptId2(),bulkload,dbMappings,immunizationId);
+        setImmunization(
+                wrapper,
+                dose,
+                route,
+                immunizationOnset,
+                immunizationLogicId,
+                immunizationSourceIdentifier,
+                personId,
+                visitOccId,
+                getActualConcept.getConceptCode(),
+                getActualConcept.getConceptId(),
+                getConcept.getConceptId(),
+                getActualConcept.getDomainId(),
+                immunizationId);
 
-      immunizationProcessor(
-              null,
-              snomedStandardConcepts,
-              wrapper,
-              dose,
-              route,
-              immunizationOnset,
-              immunizationLogicId,
-              immunizationSourceIdentifier,
-              personId,
-              visitOccId,
-              immunizationId);
+      } else {
+        setImmunization(
+                wrapper,
+                dose,
+                route,
+                immunizationOnset,
+                immunizationLogicId,
+                immunizationSourceIdentifier,
+                personId,
+                visitOccId,
+                getConcept.getConceptCode(),
+                getConcept.getConceptId(),
+                getConcept.getConceptId(),
+                getConcept.getDomainId(),
+                immunizationId);
+      }
+
     }else if (immunizationVocabularyId.equals(VOCABULARY_WHO)) {
-      // for SNOMED codes
+      // for WHO codes
 
-      var snomedCodingList = getSnomedCodingList(vaccineCoding);
-      var snomedStandardConcepts =
-              getSnomedConceptList(
-                      snomedCodingList, immunizationOnset, immunizationLogicId, immunizationId);
+//      var snomedCodingList = getSnomedCodingList(vaccineCoding);
+      var getConcept =
+              findOmopConcepts.getConcepts(
+                      vaccineCoding,null,bulkload,dbMappings,immunizationId
+              );
+      if(getConcept == null){
+        log.warn("no concept found for  {}",immunizationId);
+        return;
+      }
+      var getConceptRelation =
+              findOmopConceptRelationship.getConceptRelationShip(getConcept.getConceptId());
+      if(getConceptRelation != null){
+        var getActualConcept = findOmopConcepts.getConcepts(getConceptRelation.getConceptId2(),bulkload,dbMappings,immunizationId);
+        setImmunization(
+                wrapper,
+                dose,
+                route,
+                immunizationOnset,
+                immunizationLogicId,
+                immunizationSourceIdentifier,
+                personId,
+                visitOccId,
+                getActualConcept.getConceptCode(),
+                getActualConcept.getConceptId(),
+                getConcept.getConceptId(),
+                getActualConcept.getDomainId(),
+                immunizationId);
 
-      immunizationProcessor(
-              null,
-              snomedStandardConcepts,
-              wrapper,
-              dose,
-              route,
-              immunizationOnset,
-              immunizationLogicId,
-              immunizationSourceIdentifier,
-              personId,
-              visitOccId,
-              immunizationId);
+      } else {
+        setImmunization(
+                wrapper,
+                dose,
+                route,
+                immunizationOnset,
+                immunizationLogicId,
+                immunizationSourceIdentifier,
+                personId,
+                visitOccId,
+                getConcept.getConceptCode(),
+                getConcept.getConceptId(),
+                getConcept.getConceptId(),
+                getConcept.getDomainId(),
+                immunizationId);
+      }
+
     }
   }
 
@@ -671,10 +747,12 @@ public class ImmunizationMapper implements FhirMapper<Immunization> {
 
       newObservation.setUnitSourceValue(dose.getUnit());
       newObservation.setValueAsNumber(dose.getValue());
-      newObservation.setUnitConceptId(
-          unitConcept.getConceptId() == CONCEPT_NO_MATCHING_CONCEPT
-              ? null
-              : unitConcept.getConceptId());
+      if(unitConcept != null){
+        newObservation.setUnitConceptId(
+                unitConcept.getConceptId() == CONCEPT_NO_MATCHING_CONCEPT
+                        ? null
+                        : unitConcept.getConceptId());
+      }
     }
 
     if (route != null) {

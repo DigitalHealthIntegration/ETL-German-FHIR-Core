@@ -6,6 +6,8 @@ import java.util.stream.Collectors;
 import org.miracum.etl.fhirtoomop.model.omop.Concept;
 import org.springframework.data.repository.PagingAndSortingRepository;
 
+import javax.persistence.criteria.CriteriaBuilder;
+
 /**
  * The ConceptRepository interface represents a repository for the concept table in OMOP CDM.
  *
@@ -89,5 +91,11 @@ public interface ConceptRepository extends PagingAndSortingRepository<Concept, L
   default Map<String, Integer> findConceptByConceptName(String conceptName, String vocabularyId) {
     return findByConceptNameAndVocabularyId(conceptName, vocabularyId).stream()
         .collect(Collectors.toMap(Concept::getConceptName, Concept::getConceptId));
+  }
+
+  List<Concept> getConceptByConceptId(Integer conceptId);
+
+  default List<Concept> findAllConceptByConceptId(Integer conceptId){
+    return getConceptByConceptId(conceptId);
   }
 }

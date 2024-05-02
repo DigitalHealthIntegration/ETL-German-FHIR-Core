@@ -39,4 +39,5 @@ public class OmopRepository {
   @Autowired private OpsStandardRepository opsStandardRepository;
   @Autowired private AtcStandardRepository atcStandardRepository;
   @Autowired private StandardRepository standardRepository;
+  @Autowired private ConceptRelationshipRepository conceptRelationshipRepository;
 }

@@ -2,6 +2,8 @@ package org.miracum.etl.fhirtoomop.mapper;
 
 import static org.miracum.etl.fhirtoomop.Constants.CONCEPT_EHR;
 import static org.miracum.etl.fhirtoomop.Constants.FHIR_RESOURCE_ACCEPTABLE_EVENT_STATUS_LIST;
+import static org.miracum.etl.fhirtoomop.Constants.FHIR_RESOURCE_IPRD_OBSERVATION_CODE;
+import static org.miracum.etl.fhirtoomop.Constants.FHIR_RESOURCE_IPRD_PROCEDURE_CATEGORY;
 import static org.miracum.etl.fhirtoomop.Constants.OMOP_DOMAIN_CONDITION;
 import static org.miracum.etl.fhirtoomop.Constants.OMOP_DOMAIN_DRUG;
 import static org.miracum.etl.fhirtoomop.Constants.OMOP_DOMAIN_MEASUREMENT;
@@ -33,6 +35,7 @@ import org.hl7.fhir.r4.model.Procedure;
 import org.hl7.fhir.r4.model.ResourceType;
 import org.miracum.etl.fhirtoomop.DbMappings;
 import org.miracum.etl.fhirtoomop.config.FhirSystems;
+import org.miracum.etl.fhirtoomop.mapper.helpers.FindOmopConceptRelationship;
 import org.miracum.etl.fhirtoomop.mapper.helpers.FindOmopConcepts;
 import org.miracum.etl.fhirtoomop.mapper.helpers.MapperMetrics;
 import org.miracum.etl.fhirtoomop.mapper.helpers.ResourceCheckDataAbsentReason;
@@ -98,6 +101,10 @@ public class ProcedureMapper implements FhirMapper<Procedure> {
   @Autowired ResourceFhirReferenceUtils fhirReferenceUtils;
   @Autowired ResourceCheckDataAbsentReason checkDataAbsentReason;
   @Autowired FindOmopConcepts findOmopConcepts;
+
+  @Autowired
+  FindOmopConceptRelationship findOmopConceptRelationship;
+
   @Autowired
   EncounterDepartmentCaseMapperServiceImpl departmentCaseMapperService;
 
@@ -152,6 +159,9 @@ public class ProcedureMapper implements FhirMapper<Procedure> {
 
     var statusElement = srcProcedure.getStatusElement();
     var statusValue = checkDataAbsentReason.getValue(statusElement);
+    if(statusValue == null){
+      statusValue = "completed";
+    }
     if (Strings.isNullOrEmpty(statusValue)
         || !FHIR_RESOURCE_ACCEPTABLE_EVENT_STATUS_LIST.contains(statusValue)) {
       log.error(
@@ -171,9 +181,13 @@ public class ProcedureMapper implements FhirMapper<Procedure> {
 
     var procedureCodings = getProcedureCodings(srcProcedure, procedureLogicId);
     if (procedureCodings.isEmpty()) {
-      log.warn("No [Code] found in [Procedure]: {}. Skip resource", procedureId);
-      noCodeCounter.increment();
-      return null;
+      var procedureCategory = getProcedureCategory(srcProcedure);
+      if(procedureCategory == null){
+        log.warn("No [Code] found in [Procedure]: {}. Skip resource", procedureId);
+        noCodeCounter.increment();
+        return null;
+      }
+      procedureCodings = procedureCategory;
     }
 
     var procedureOnset = getProcedureOnset(srcProcedure);
@@ -213,6 +227,13 @@ public class ProcedureMapper implements FhirMapper<Procedure> {
     }
 
     return wrapper;
+  }
+
+  private List<Coding> getProcedureCategory(Procedure srcProcedure) {
+    if(srcProcedure.hasCategory()){
+      return srcProcedure.getCategory().getCoding();
+    }
+    return null;
   }
 
   private List<Coding> extractDeviceCode(List<CodeableConcept> usedCodesCodeableConcepts) {
@@ -363,6 +384,7 @@ public class ProcedureMapper implements FhirMapper<Procedure> {
     Concept snomedConcept = null;
     Concept iprdConcept = null;
     Concept whoConcept = null;
+    Concept customConcept = null;
 
     var procedureCodeExist =
         checkIfAnyProcedureCodesExist(procedureCoding, listOfProcedureVocabularyId);
@@ -375,6 +397,65 @@ public class ProcedureMapper implements FhirMapper<Procedure> {
     var procedureBodySiteLocalization =
         getBodySiteLocalization(
             srcProcedure, procedureCoding, procedureStartDatetime.toLocalDate(), procedureId);
+
+    if(FHIR_RESOURCE_IPRD_PROCEDURE_CATEGORY.contains(procedureCoding.getCode())){
+      customConcept = findOmopConcepts.getConcepts(
+              procedureCoding,
+              procedureStartDatetime.toLocalDate(),
+              bulkload,
+              dbMappings,
+              procedureId
+      );
+      if(customConcept == null){
+        log.warn("No Concept Found for {}",procedureId);
+        return;
+      }
+      var getConceptRelation =
+              findOmopConceptRelationship.getConceptRelationShip(customConcept.getConceptId());
+      if(getConceptRelation != null){
+        var getActualConcept = findOmopConcepts.getConcepts(getConceptRelation.getConceptId2(),bulkload,dbMappings,procedureId);
+        setProcedure(
+                wrapper,
+                procedureBodySiteLocalization,
+                procedureStartDatetime,
+                procedureLogicId,
+                procedureSourceIdentifier,
+                personId,
+                visitOccId,
+                getActualConcept.getConceptCode(),
+                getActualConcept.getConceptId(),
+                getActualConcept.getConceptId(),
+                OMOP_DOMAIN_PROCEDURE,
+                procedureId
+        );
+//        procedureProcessor(
+//                null,
+//                getActualConcept,
+//                null,
+//                wrapper,
+//                procedureBodySiteLocalization,
+//                procedureStartDatetime,
+//                procedureLogicId,
+//                procedureSourceIdentifier,
+//                personId,
+//                visitOccId,
+//                procedureId);
+//      }else{
+//        procedureProcessor(
+//                null,
+//                customConcept,
+//                null,
+//                wrapper,
+//                procedureBodySiteLocalization,
+//                procedureStartDatetime,
+//                procedureLogicId,
+//                procedureSourceIdentifier,
+//                personId,
+//                visitOccId,
+//                procedureId);
+      }
+      return;
+    }
 
     if (procedureVocabularyId.equals(VOCABULARY_OPS)) {
       // for OPS codes
@@ -462,21 +543,39 @@ public class ProcedureMapper implements FhirMapper<Procedure> {
                       procedureId);
 
       if (iprdConcept == null) {
+        log.warn("No Concept Found");
         return;
       }
-
-      procedureProcessor(
-              null,
-              iprdConcept,
-              null,
-              wrapper,
-              procedureBodySiteLocalization,
-              procedureStartDatetime,
-              procedureLogicId,
-              procedureSourceIdentifier,
-              personId,
-              visitOccId,
-              procedureId);
+      var getConceptRelation =
+              findOmopConceptRelationship.getConceptRelationShip(iprdConcept.getConceptId());
+      if(getConceptRelation != null){
+        var getActualConcept = findOmopConcepts.getConcepts(getConceptRelation.getConceptId2(),bulkload,dbMappings,procedureId);
+        procedureProcessor(
+                null,
+                getActualConcept,
+                null,
+                wrapper,
+                procedureBodySiteLocalization,
+                procedureStartDatetime,
+                procedureLogicId,
+                procedureSourceIdentifier,
+                personId,
+                visitOccId,
+                procedureId);
+      }else{
+        procedureProcessor(
+                null,
+                iprdConcept,
+                null,
+                wrapper,
+                procedureBodySiteLocalization,
+                procedureStartDatetime,
+                procedureLogicId,
+                procedureSourceIdentifier,
+                personId,
+                visitOccId,
+                procedureId);
+      }
     }
     else if (procedureVocabularyId.equals(VOCABULARY_WHO)) {
       // for WHO codes
@@ -488,23 +587,45 @@ public class ProcedureMapper implements FhirMapper<Procedure> {
                       bulkload,
                       dbMappings,
                       procedureId);
-
       if (whoConcept == null) {
+        log.warn("No Concept Found");
         return;
       }
-
-      procedureProcessor(
-              null,
-              whoConcept,
-              null,
-              wrapper,
-              procedureBodySiteLocalization,
-              procedureStartDatetime,
-              procedureLogicId,
-              procedureSourceIdentifier,
-              personId,
-              visitOccId,
-              procedureId);
+      var getConceptRelation =
+              findOmopConceptRelationship.getConceptRelationShip(whoConcept.getConceptId());
+      if(getConceptRelation != null){
+       Concept getActualConcept = null;
+               try {
+                 getActualConcept = findOmopConcepts.getConcepts(getConceptRelation.getConceptId2(),bulkload,dbMappings,procedureId);
+               } catch (IndexOutOfBoundsException e){
+                 log.warn("{},{}",getConceptRelation.getConceptId1(),getConceptRelation.getConceptId2());
+               }
+        procedureProcessor(
+                null,
+                getActualConcept,
+                null,
+                wrapper,
+                procedureBodySiteLocalization,
+                procedureStartDatetime,
+                procedureLogicId,
+                procedureSourceIdentifier,
+                personId,
+                visitOccId,
+                procedureId);
+      }else{
+        procedureProcessor(
+                null,
+                whoConcept,
+                null,
+                wrapper,
+                procedureBodySiteLocalization,
+                procedureStartDatetime,
+                procedureLogicId,
+                procedureSourceIdentifier,
+                personId,
+                visitOccId,
+                procedureId);
+      }
     }
   }
 

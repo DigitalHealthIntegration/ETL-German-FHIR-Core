@@ -35,6 +35,7 @@ import org.hl7.fhir.r4.model.ResourceType;
 import org.hl7.fhir.r4.model.StringType;
 import org.miracum.etl.fhirtoomop.DbMappings;
 import org.miracum.etl.fhirtoomop.config.FhirSystems;
+import org.miracum.etl.fhirtoomop.mapper.helpers.FindOmopConceptRelationship;
 import org.miracum.etl.fhirtoomop.mapper.helpers.FindOmopConcepts;
 import org.miracum.etl.fhirtoomop.mapper.helpers.MapperMetrics;
 import org.miracum.etl.fhirtoomop.mapper.helpers.ResourceCheckDataAbsentReason;
@@ -80,8 +81,13 @@ public class ConditionMapper implements FhirMapper<Condition> {
   @Autowired ConditionMapperServiceImpl conditionService;
   @Autowired ResourceCheckDataAbsentReason checkDataAbsentReason;
   @Autowired FindOmopConcepts findOmopConcepts;
+
+  @Autowired
+  FindOmopConceptRelationship findOmopConceptRelationship;
+
   @Autowired
   EncounterDepartmentCaseMapperServiceImpl departmentCaseMapperService;
+
   private static final Counter noStartDateCounter =
       MapperMetrics.setNoStartDateCounter("stepProcessConditions");
   private static final Counter noPersonIdCounter =
@@ -461,20 +467,38 @@ public class ConditionMapper implements FhirMapper<Condition> {
                       conditionId);
 
       if (snomedConcept == null) {
+        log.warn("No Concept found");
         return;
       }
-
-      icdProcessor(
-              null,
-              snomedConcept,
-              null,
-              wrapper,
-              diagnoseOnset,
-              diagnosticConfidenceConcept,
-              conditionLogicId,
-              conditionSourceIdentifier,
-              personId,
-              visitOccId);
+      var getConceptRelation =
+              findOmopConceptRelationship.getConceptRelationShip(snomedConcept.getConceptId());
+      if(getConceptRelation != null){
+        var getActualConcept = findOmopConcepts.getConcepts(getConceptRelation.getConceptId2(),bulkload,dbMappings,conditionId);
+        icdProcessor(
+                null,
+                getActualConcept,
+                null,
+                wrapper,
+                diagnoseOnset,
+                diagnosticConfidenceConcept,
+                conditionLogicId,
+                conditionSourceIdentifier,
+                personId,
+                visitOccId);
+      }
+      else{
+        icdProcessor(
+                null,
+                snomedConcept,
+                null,
+                wrapper,
+                diagnoseOnset,
+                diagnosticConfidenceConcept,
+                conditionLogicId,
+                conditionSourceIdentifier,
+                personId,
+                visitOccId);
+      }
     }
 
     setBodySiteLocalization(

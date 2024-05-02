@@ -121,6 +121,10 @@ public class EncounterDepartmentCaseMapper implements FhirMapper<Encounter> {
     var wrapper = new OmopModelWrapper();
 
     var departmentCaseLogicId = fhirReferenceUtils.extractId(srcDepartmentCaseEncounter);
+//    var result = Objects.equals(departmentCaseLogicId, "enc-9e6b3982-bf03-4cee-a692-befd1b74f96d");
+//    if(!result){
+//      return null;
+//    }
     var departmentCaseIdentifier =
         fhirReferenceUtils.extractIdentifier(srcDepartmentCaseEncounter, "VN");
     if (Strings.isNullOrEmpty(departmentCaseLogicId)
