@@ -41,6 +41,9 @@ public class Appointment {
     @Column(name = "created_datetime")
     private LocalDateTime createdDateTime;
 
+    @Column(name = "appointment_reason", nullable = true)
+    private String appointmentReason;
+
     @Column(name = "appointment_description", nullable = true)
     private String appointmentDescription;
 
@@ -49,4 +52,7 @@ public class Appointment {
 
     @Column(name = "fhir_logical_id", nullable = true)
     private String fhirLogicalId;
+
+    @Column(name = "questionnaire_response_id", nullable = true)
+    private String questionnaireResponseId;
 }

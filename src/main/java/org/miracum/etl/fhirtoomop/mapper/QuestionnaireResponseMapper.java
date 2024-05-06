@@ -4,6 +4,7 @@ import ca.uhn.fhir.fhirpath.IFhirPath;
 import com.google.common.base.Strings;
 import io.micrometer.core.instrument.Counter;
 import lombok.extern.slf4j.Slf4j;
+import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Enumerations;
 import org.hl7.fhir.r4.model.QuestionnaireResponse;
 import org.hl7.fhir.r4.model.ResourceType;
@@ -20,6 +21,8 @@ import org.springframework.stereotype.Component;
 
 import javax.persistence.Index;
 import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -56,6 +59,7 @@ public class QuestionnaireResponseMapper implements FhirMapper<QuestionnaireResp
             noFhirReferenceCounter.increment();
             return null;
         }
+        var appReasonList = srcQuestionnaireResponse.getItem().stream().filter(questionnaireResponseItemComponent -> questionnaireResponseItemComponent.getLinkId().equals("service-type")).toList();
         var encounterId = srcQuestionnaireResponse.getEncounter().getReferenceElement().getIdPart();
         var encounterLogicalId = fhirReferenceUtils.extractId(ResourceType.Encounter.name(),encounterId);
         var tagOfQuestionnaireResponse = srcQuestionnaireResponse.getMeta().getTag().stream().findFirst();
@@ -78,7 +82,9 @@ public class QuestionnaireResponseMapper implements FhirMapper<QuestionnaireResp
         var combinedTagCodeAndQuestionnaire = questionnaireResponseTagCode.concat(",").concat(mappedQuestionnaire);
         var addQuestionnaireResponseToPostProcess = postProcessMapForQuestionnaireResponse(
                 questionnaireResponseLogicalId,combinedTagCodeAndQuestionnaire,encounterLogicalId);
+        var addAppointmentReasonToPostProcess = postProcessMapForAppointment(questionnaireResponseLogicalId, appReasonList);
         wrapper.getPostProcessMap().add(addQuestionnaireResponseToPostProcess);
+        wrapper.getPostProcessMap().add(addAppointmentReasonToPostProcess);
         return wrapper;
     }
 
@@ -94,4 +100,18 @@ public class QuestionnaireResponseMapper implements FhirMapper<QuestionnaireResp
                 .build();
     }
 
+    private PostProcessMap postProcessMapForAppointment(
+            String questionnaireResponseLogicalId,
+            List<QuestionnaireResponse.QuestionnaireResponseItemComponent> appReasonList
+    ) {
+        if (appReasonList.isEmpty())
+            return null;
+        var appReason = ((Coding) appReasonList.get(0).getAnswerFirstRep().getValue()).getDisplay();
+        return PostProcessMap.builder()
+                .dataOne("Appointment Reason")
+                .dataTwo(appReason)
+                .type(Enumerations.ResourceType.APPOINTMENT.name())
+                .fhirLogicalId(questionnaireResponseLogicalId)
+                .build();
+    }
 }
