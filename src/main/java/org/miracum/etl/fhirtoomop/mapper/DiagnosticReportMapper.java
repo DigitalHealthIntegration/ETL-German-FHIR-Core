@@ -60,6 +60,10 @@ public class DiagnosticReportMapper implements FhirMapper<DiagnosticReport> {
       MapperMetrics.setNoFhirReferenceCounter("stepProcessDiagnosticReport");
   private static final Counter deletedFhirReferenceCounter =
       MapperMetrics.setDeletedFhirRessourceCounter("stepProcessDiagnosticReport");
+  private static final Counter statusNotAcceptableCounter =
+          MapperMetrics.setStatusNotAcceptableCounter("stepProcessConsent");
+  private static final Counter noCategoryCount =
+          MapperMetrics.setCategoryNotFoundCount("stepProcessObservations");
 
   @Autowired
   public DiagnosticReportMapper(DbMappings dbMappings, Boolean bulkload) {
@@ -103,6 +107,7 @@ public class DiagnosticReportMapper implements FhirMapper<DiagnosticReport> {
           "The [status]: {} of {} is not acceptible for writing into OMOP CDM. Skip resource.",
           status,
           diagnosticReportId);
+      statusNotAcceptableCounter.increment();
       return null;
     }
 
@@ -127,6 +132,7 @@ public class DiagnosticReportMapper implements FhirMapper<DiagnosticReport> {
       log.warn(
           "No [Category Loinc Code] found for [DiagnosticReport]: {}. Skip resource",
           diagnosticReportId);
+      noCategoryCount.increment();
       return null;
     }
 

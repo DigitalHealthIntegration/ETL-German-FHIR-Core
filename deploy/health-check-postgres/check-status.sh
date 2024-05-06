@@ -1,7 +1,9 @@
 #!/bin/sh
 
-if psql -U ohdsi_admin_user -d ohdsi -c "SELECT * FROM cds_cdm.load_status;" | grep -q "started";  then
-  exit 0  # Table exists, return healthy
+if psql -U ohdsi_admin_user -d ohdsi -c "SELECT * FROM cds_cdm.load_status;" | grep -q "started"; then
+    echo "Table exists, returning healthy"
+    exit 0
 else
-  exit 1  # Table does not exist, return not healthy
+    echo "Table does not exist, returning not healthy"
+    exit 1
 fi

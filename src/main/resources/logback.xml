@@ -1,0 +1,46 @@
+<configuration>
+    <!-- Console Appender -->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%date %-5level [%thread] %logger{35} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- File Appender -->
+    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+        <file>/home/logs/fullLogs.log</file>
+        <append>false</append>
+        <encoder>
+            <pattern>%date %-5level [%thread] %logger{35} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="MARKER_FILE" class="ch.qos.logback.core.FileAppender">
+        <file>/home/logs/summaryLogs.log</file>
+        <append>false</append>
+        <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
+            <evaluator class="ch.qos.logback.classic.boolex.OnMarkerEvaluator">
+                <marker>summary</marker>
+            </evaluator>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+        <encoder>
+            <pattern>%msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Logger "deng" -->
+    <logger name="deng" level="DEBUG">
+        <appender-ref ref="FILE"/> <!-- Use FILE appender for "deng" logger -->
+        <appender-ref ref="STDOUT"/> <!-- Use STDOUT (Console) appender for "deng" logger -->
+        <appender-ref ref="MARKER_FILE"/> <!-- Use MARKER_FILE appender for "deng" logger -->
+    </logger>
+
+    <!-- Root Logger -->
+    <root level="INFO">
+        <appender-ref ref="FILE"/> <!-- Use FILE appender for root logger -->
+        <appender-ref ref="STDOUT"/> <!-- Use STDOUT (Console) appender for root logger -->
+        <appender-ref ref="MARKER_FILE"/> <!-- Use MARKER_FILE appender for "deng" logger -->
+    </root>
+</configuration>
