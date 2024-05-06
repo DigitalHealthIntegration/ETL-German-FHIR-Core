@@ -145,5 +145,9 @@ public class Constants {
   public static final ImmutableList<String> FHIR_RESOURCE_GECCO_OBSERVATION_SOFA_CODES =
       ImmutableList.of("06");
 
+  public static final String SCHEDULE_APPOINTMENT = "schedule-appointment";
+
+  public static final String SERVICE_TYPE = "service-type";
+
   private Constants() {}
 }

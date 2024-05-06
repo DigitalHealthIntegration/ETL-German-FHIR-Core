@@ -5,18 +5,19 @@ import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.miracum.etl.fhirtoomop.model.omop.CareSite;
+import org.miracum.etl.fhirtoomop.model.omop.Person;
+import org.miracum.etl.fhirtoomop.model.omop.VisitOccurrence;
 import org.miracum.etl.fhirtoomop.model.omop.ConditionOccurrence;
-import org.miracum.etl.fhirtoomop.model.omop.DeviceExposure;
+import org.miracum.etl.fhirtoomop.model.omop.ProcedureOccurrence;
 import org.miracum.etl.fhirtoomop.model.omop.DrugExposure;
 import org.miracum.etl.fhirtoomop.model.omop.Measurement;
 import org.miracum.etl.fhirtoomop.model.omop.OmopObservation;
-import org.miracum.etl.fhirtoomop.model.omop.Person;
-import org.miracum.etl.fhirtoomop.model.omop.ProcedureOccurrence;
 import org.miracum.etl.fhirtoomop.model.omop.Provider;
 import org.miracum.etl.fhirtoomop.model.omop.VisitDetail;
-import org.miracum.etl.fhirtoomop.model.omop.VisitOccurrence;
+import org.miracum.etl.fhirtoomop.model.omop.DeviceExposure;
 import org.miracum.etl.fhirtoomop.model.omop.Specimen;
+import org.miracum.etl.fhirtoomop.model.omop.CareSite;
+import org.miracum.etl.fhirtoomop.model.omop.Appointment;
 
 /**
  * The OmopModelWrapper class serves as a cache of newly created records, which are to be written to
@@ -44,6 +45,7 @@ public class OmopModelWrapper {
   private List<PostProcessMap> postProcessMap = new ArrayList<>();
   private List<Specimen> specimen = new ArrayList<>();
   private CareSite careSite;
+  private Appointment appointment;
 
   /**
    * Enumeration of all OMOP CDM table names which can be filled by the ETL process.
@@ -52,6 +54,7 @@ public class OmopModelWrapper {
    * @author Yuan Peng
    */
   public enum Tablename {
+    APPOINTMENT("appointment"),
     PERSON("person"),
     LOCATION("location"),
     DEATH("death"),

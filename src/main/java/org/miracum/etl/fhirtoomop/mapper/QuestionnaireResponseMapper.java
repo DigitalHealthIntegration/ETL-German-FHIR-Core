@@ -4,6 +4,7 @@ import ca.uhn.fhir.fhirpath.IFhirPath;
 import com.google.common.base.Strings;
 import io.micrometer.core.instrument.Counter;
 import lombok.extern.slf4j.Slf4j;
+import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Enumerations;
 import org.hl7.fhir.r4.model.QuestionnaireResponse;
 import org.hl7.fhir.r4.model.ResourceType;
@@ -11,6 +12,7 @@ import org.miracum.etl.fhirtoomop.DbMappings;
 import org.miracum.etl.fhirtoomop.config.FhirSystems;
 import org.miracum.etl.fhirtoomop.mapper.helpers.MapperMetrics;
 import org.miracum.etl.fhirtoomop.mapper.helpers.ResourceFhirReferenceUtils;
+import org.miracum.etl.fhirtoomop.mapper.helpers.ResourceOmopReferenceUtils;
 import org.miracum.etl.fhirtoomop.model.OmopModelWrapper;
 import org.miracum.etl.fhirtoomop.model.PostProcessMap;
 import org.miracum.etl.fhirtoomop.processor.QuestionnaireResponseProcessor;
@@ -19,6 +21,11 @@ import org.springframework.stereotype.Component;
 
 import javax.persistence.Index;
 import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import static org.miracum.etl.fhirtoomop.Constants.SCHEDULE_APPOINTMENT;
+import static org.miracum.etl.fhirtoomop.Constants.SERVICE_TYPE;
 
 @Slf4j
 @Component
@@ -32,6 +39,9 @@ public class QuestionnaireResponseMapper implements FhirMapper<QuestionnaireResp
 
     @Autowired
     ResourceFhirReferenceUtils fhirReferenceUtils;
+
+    @Autowired
+    ResourceOmopReferenceUtils omopReferenceUtils;
 
     private static final Counter noFhirReferenceCounter = MapperMetrics.setNoFhirReferenceCounter("stepProcessQuestionnaireResponse");
 
@@ -74,6 +84,11 @@ public class QuestionnaireResponseMapper implements FhirMapper<QuestionnaireResp
         var combinedTagCodeAndQuestionnaire = questionnaireResponseTagCode.concat(",").concat(mappedQuestionnaire);
         var addQuestionnaireResponseToPostProcess = postProcessMapForQuestionnaireResponse(
                 questionnaireResponseLogicalId,combinedTagCodeAndQuestionnaire,encounterLogicalId);
+        if (srcQuestionnaireResponse.getMeta().hasTag() && srcQuestionnaireResponse.getMeta().getTagFirstRep().getCode().equals(SCHEDULE_APPOINTMENT)){
+            var appointmentReasonList = srcQuestionnaireResponse.getItem().stream().filter(questionnaireResponseItemComponent -> questionnaireResponseItemComponent.getLinkId().equals(SERVICE_TYPE)).toList();
+            var addAppointmentReasonToPostProcess = postProcessMapForAppointment(questionnaireResponseLogicalId, appointmentReasonList);
+            wrapper.getPostProcessMap().add(addAppointmentReasonToPostProcess);
+        }
         wrapper.getPostProcessMap().add(addQuestionnaireResponseToPostProcess);
         return wrapper;
     }
@@ -90,4 +105,18 @@ public class QuestionnaireResponseMapper implements FhirMapper<QuestionnaireResp
                 .build();
     }
 
+    private PostProcessMap postProcessMapForAppointment(
+            String questionnaireResponseLogicalId,
+            List<QuestionnaireResponse.QuestionnaireResponseItemComponent> appReasonList
+    ) {
+        if (appReasonList.isEmpty())
+            return null;
+        var appReason = ((Coding) appReasonList.get(0).getAnswerFirstRep().getValue()).getDisplay();
+        return PostProcessMap.builder()
+                .dataOne("Appointment Reason")
+                .dataTwo(appReason)
+                .type(Enumerations.ResourceType.APPOINTMENT.name())
+                .fhirLogicalId(questionnaireResponseLogicalId)
+                .build();
+    }
 }
