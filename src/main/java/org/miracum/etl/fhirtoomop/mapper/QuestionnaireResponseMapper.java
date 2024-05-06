@@ -24,6 +24,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static org.miracum.etl.fhirtoomop.Constants.SCHEDULE_APPOINTMENT;
+import static org.miracum.etl.fhirtoomop.Constants.SERVICE_TYPE;
+
 @Slf4j
 @Component
 public class QuestionnaireResponseMapper implements FhirMapper<QuestionnaireResponse>{
@@ -59,7 +62,6 @@ public class QuestionnaireResponseMapper implements FhirMapper<QuestionnaireResp
             noFhirReferenceCounter.increment();
             return null;
         }
-        var appReasonList = srcQuestionnaireResponse.getItem().stream().filter(questionnaireResponseItemComponent -> questionnaireResponseItemComponent.getLinkId().equals("service-type")).toList();
         var encounterId = srcQuestionnaireResponse.getEncounter().getReferenceElement().getIdPart();
         var encounterLogicalId = fhirReferenceUtils.extractId(ResourceType.Encounter.name(),encounterId);
         var tagOfQuestionnaireResponse = srcQuestionnaireResponse.getMeta().getTag().stream().findFirst();
@@ -82,9 +84,12 @@ public class QuestionnaireResponseMapper implements FhirMapper<QuestionnaireResp
         var combinedTagCodeAndQuestionnaire = questionnaireResponseTagCode.concat(",").concat(mappedQuestionnaire);
         var addQuestionnaireResponseToPostProcess = postProcessMapForQuestionnaireResponse(
                 questionnaireResponseLogicalId,combinedTagCodeAndQuestionnaire,encounterLogicalId);
-        var addAppointmentReasonToPostProcess = postProcessMapForAppointment(questionnaireResponseLogicalId, appReasonList);
+        if (srcQuestionnaireResponse.getMeta().hasTag() && srcQuestionnaireResponse.getMeta().getTagFirstRep().getCode().equals(SCHEDULE_APPOINTMENT)){
+            var appointmentReasonList = srcQuestionnaireResponse.getItem().stream().filter(questionnaireResponseItemComponent -> questionnaireResponseItemComponent.getLinkId().equals(SERVICE_TYPE)).toList();
+            var addAppointmentReasonToPostProcess = postProcessMapForAppointment(questionnaireResponseLogicalId, appointmentReasonList);
+            wrapper.getPostProcessMap().add(addAppointmentReasonToPostProcess);
+        }
         wrapper.getPostProcessMap().add(addQuestionnaireResponseToPostProcess);
-        wrapper.getPostProcessMap().add(addAppointmentReasonToPostProcess);
         return wrapper;
     }
 
